@@ -1,0 +1,37 @@
+name: Bug Report
+description: Report a defect or regression in Entrix
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Include enough detail to reproduce and verify the issue.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the current behavior and the expected behavior.
+      placeholder: Entrix should..., but instead...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide steps, commands, or a minimal fixture.
+      placeholder: |
+        1. Run ...
+        2. Use config ...
+        3. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Python version, Entrix version, OS, and any relevant tooling.
+      placeholder: Python 3.12, entrix 0.1.5, Ubuntu 24.04
+    validations:
+      required: true
