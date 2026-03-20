@@ -1,9 +1,9 @@
-"""Tests for routa_fitness.runners.graph."""
+"""Tests for entrix.runners.graph."""
 
 from pathlib import Path
 
-import routa_fitness.runners.graph as graph_module
-from routa_fitness.runners.graph import GraphRunner
+import entrix.runners.graph as graph_module
+from entrix.runners.graph import GraphRunner
 
 
 class FakeAdapter:
@@ -149,7 +149,7 @@ def test_analyze_history_estimates_recent_commits(monkeypatch, tmp_path: Path):
 def test_build_graph_auto_uses_builtin_cache(monkeypatch, tmp_path: Path):
     adapter = FakeAdapter()
     monkeypatch.setattr(graph_module, "try_create_adapter", lambda _: adapter)
-    cache_dir = tmp_path / ".routa-fitness"
+    cache_dir = tmp_path / ".entrix"
     cache_dir.mkdir()
     (cache_dir / "index.json").write_text("{}", encoding="utf-8")
 

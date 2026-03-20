@@ -6,18 +6,18 @@ import fnmatch
 import subprocess
 from pathlib import Path
 
-from routa_fitness.governance import GovernancePolicy, filter_dimensions
-from routa_fitness.loaders import load_dimensions
-from routa_fitness.model import Dimension, EvidenceType, FitnessReport, Gate, Metric, MetricResult, ResultState
-from routa_fitness.presets.base import ProjectPreset
-from routa_fitness.runners.graph import GraphRunner
-from routa_fitness.runners.shell import ShellRunner
-from routa_fitness.scoring import score_dimension, score_report
+from entrix.governance import GovernancePolicy, filter_dimensions
+from entrix.loaders import load_dimensions
+from entrix.model import Dimension, EvidenceType, FitnessReport, Gate, Metric, MetricResult, ResultState
+from entrix.presets.base import ProjectPreset
+from entrix.runners.graph import GraphRunner
+from entrix.runners.shell import ShellRunner
+from entrix.scoring import score_dimension, score_report
 
 
 def collect_changed_files(project_root: Path, base: str) -> list[str]:
     """Collect changed files from git for incremental fitness runs."""
-    from routa_fitness.presets import get_project_preset
+    from entrix.presets import get_project_preset
 
     preset = get_project_preset()
     files: list[str] = []

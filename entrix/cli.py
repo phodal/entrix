@@ -7,20 +7,20 @@ import json
 import sys
 from pathlib import Path
 
-from routa_fitness.engine import collect_changed_files, matches_changed_files, run_fitness_report
-from routa_fitness.governance import GovernancePolicy, enforce
-from routa_fitness.loaders import load_dimensions, validate_weights
-from routa_fitness.model import ExecutionScope, Metric, ResultState, Tier
-from routa_fitness.presets import get_project_preset
-from routa_fitness.reporting import report_to_dict, write_report_output
-from routa_fitness.review_trigger import (
+from entrix.engine import collect_changed_files, matches_changed_files, run_fitness_report
+from entrix.governance import GovernancePolicy, enforce
+from entrix.loaders import load_dimensions, validate_weights
+from entrix.model import ExecutionScope, Metric, ResultState, Tier
+from entrix.presets import get_project_preset
+from entrix.reporting import report_to_dict, write_report_output
+from entrix.review_trigger import (
     collect_changed_files as collect_review_changed_files,
     collect_diff_stats,
     evaluate_review_triggers,
     load_review_triggers,
 )
-from routa_fitness.reporters.terminal import TerminalReporter
-from routa_fitness.runners.graph import GraphRunner
+from entrix.reporters.terminal import TerminalReporter
+from entrix.runners.graph import GraphRunner
 
 
 def _find_project_root() -> Path:
@@ -425,8 +425,8 @@ def cmd_graph_review_context(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="routa-fitness",
-        description="Evolutionary architecture fitness engine for Routa",
+        prog="entrix",
+        description="Evolutionary architecture fitness engine for change-aware verification",
     )
     subparsers = parser.add_subparsers(dest="command")
 

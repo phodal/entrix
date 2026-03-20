@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Protocol
 
-from routa_fitness.model import Metric
+from entrix.model import Metric
 
 
 class ProjectPreset(Protocol):

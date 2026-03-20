@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from routa_fitness.structure.builtin import BuiltinGraphAdapter
+from entrix.structure.builtin import BuiltinGraphAdapter
 
 
 pytestmark = pytest.mark.skipif(

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import sys
 
-from routa_fitness.model import FitnessReport
-from routa_fitness.reporting import report_to_dict
+from entrix.model import FitnessReport
+from entrix.reporting import report_to_dict
 
 
 class JsonReporter:

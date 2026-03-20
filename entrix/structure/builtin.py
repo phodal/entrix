@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from routa_fitness.structure.impact import (
+from entrix.structure.impact import (
     classify_test_file,
     filter_code_files,
     git_changed_files,
@@ -24,13 +24,13 @@ except ImportError:  # pragma: no cover - exercised via adapter selection
 
 
 _CACHE_VERSION = 4
-_CACHE_DIR = ".routa-fitness"
+_CACHE_DIR = ".entrix"
 _FILES_CACHE_FILE = "files.json"
 _INDEX_CACHE_FILE = "index.json"
 _LEGACY_CACHE_FILE = "graph.json"
 _DEFAULT_IGNORE_PATTERNS = [
     ".code-review-graph/**",
-    ".routa-fitness/**",
+    ".entrix/**",
     "node_modules/**",
     ".git/**",
     "__pycache__/**",

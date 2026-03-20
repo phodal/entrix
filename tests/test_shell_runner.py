@@ -1,10 +1,10 @@
-"""Tests for routa_fitness.runners.shell."""
+"""Tests for entrix.runners.shell."""
 
 from datetime import date, timedelta
 from pathlib import Path
 
-from routa_fitness.model import Metric, ResultState, Waiver
-from routa_fitness.runners.shell import ShellRunner
+from entrix.model import Metric, ResultState, Waiver
+from entrix.runners.shell import ShellRunner
 
 
 def test_dry_run():

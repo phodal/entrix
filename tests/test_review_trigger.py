@@ -1,11 +1,11 @@
-"""Tests for routa_fitness.review_trigger."""
+"""Tests for entrix.review_trigger."""
 
 from __future__ import annotations
 
 import textwrap
 from pathlib import Path
 
-from routa_fitness.review_trigger import (
+from entrix.review_trigger import (
     DiffStats,
     evaluate_review_triggers,
     load_review_triggers,

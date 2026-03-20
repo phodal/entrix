@@ -8,19 +8,19 @@ from pathlib import Path
 def create_server(project_root: Path | None = None):
     """Create and configure the FastMCP server.
 
-    Requires the [mcp] optional dependency: pip install routa-fitness[mcp]
+    Requires the [mcp] optional dependency: pip install entrix[mcp]
     """
     try:
         from fastmcp import FastMCP
     except ImportError as e:
         raise ImportError(
-            "fastmcp is not installed. Install with: pip install routa-fitness[mcp]"
+            "fastmcp is not installed. Install with: pip install entrix[mcp]"
         ) from e
 
     if project_root is None:
         project_root = Path.cwd()
 
-    mcp = FastMCP("routa-fitness", instructions="Evolutionary architecture fitness engine")
+    mcp = FastMCP("entrix", instructions="Evolutionary architecture fitness engine")
 
     @mcp.tool()
     def run_fitness(
@@ -39,11 +39,11 @@ def create_server(project_root: Path | None = None):
             dry_run: Show what would run without executing.
             min_score: Minimum weighted score before the result is considered blocked.
         """
-        from routa_fitness.engine import run_fitness_report
-        from routa_fitness.governance import GovernancePolicy
-        from routa_fitness.model import ExecutionScope, Tier
-        from routa_fitness.presets import get_project_preset
-        from routa_fitness.reporting import report_to_dict
+        from entrix.engine import run_fitness_report
+        from entrix.governance import GovernancePolicy
+        from entrix.model import ExecutionScope, Tier
+        from entrix.presets import get_project_preset
+        from entrix.reporting import report_to_dict
 
         tier_filter = Tier(tier) if tier else None
         execution_scope = ExecutionScope(scope) if scope else None
@@ -65,9 +65,9 @@ def create_server(project_root: Path | None = None):
         Args:
             dimension: Dimension name (e.g. 'code_quality', 'security').
         """
-        from routa_fitness.engine import run_fitness_report
-        from routa_fitness.governance import GovernancePolicy
-        from routa_fitness.presets import get_project_preset
+        from entrix.engine import run_fitness_report
+        from entrix.governance import GovernancePolicy
+        from entrix.presets import get_project_preset
 
         report, _ = run_fitness_report(
             project_root,
@@ -114,7 +114,7 @@ def create_server(project_root: Path | None = None):
             depth: BFS traversal depth for impact analysis.
             base: Git ref to diff against.
         """
-        from routa_fitness.runners.graph import GraphRunner
+        from entrix.runners.graph import GraphRunner
 
         runner = GraphRunner(project_root)
         if not runner.available:
@@ -131,6 +131,6 @@ def create_server(project_root: Path | None = None):
 
 
 def main() -> None:
-    """Entry point for `routa-fitness serve`."""
+    """Entry point for `entrix serve`."""
     server = create_server()
     server.run(transport="stdio")

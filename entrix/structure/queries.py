@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from routa_fitness.structure.protocol import StructuralAnalyzer
+from entrix.structure.protocol import StructuralAnalyzer
 
 
 def callers_of(analyzer: StructuralAnalyzer, target: str) -> dict:

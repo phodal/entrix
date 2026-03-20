@@ -1,10 +1,10 @@
-"""Tests for routa_fitness.evidence."""
+"""Tests for entrix.evidence."""
 
 import textwrap
 from pathlib import Path
 
-from routa_fitness.evidence import load_dimensions, parse_frontmatter, validate_weights
-from routa_fitness.model import (
+from entrix.evidence import load_dimensions, parse_frontmatter, validate_weights
+from entrix.model import (
     AnalysisMode,
     Confidence,
     EvidenceType,
@@ -233,7 +233,7 @@ def test_load_dimensions_uses_manifest_when_present(tmp_path: Path):
 
 
 def test_validate_weights():
-    from routa_fitness.model import Dimension
+    from entrix.model import Dimension
 
     dims = [
         Dimension(name="a", weight=60),
@@ -245,7 +245,7 @@ def test_validate_weights():
 
 
 def test_validate_weights_fail():
-    from routa_fitness.model import Dimension
+    from entrix.model import Dimension
 
     dims = [Dimension(name="a", weight=50)]
     valid, total = validate_weights(dims)

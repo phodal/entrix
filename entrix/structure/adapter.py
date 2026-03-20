@@ -16,7 +16,7 @@ import os
 import sys
 from pathlib import Path
 
-from routa_fitness.structure.builtin import BuiltinGraphAdapter
+from entrix.structure.builtin import BuiltinGraphAdapter
 
 
 class CodeReviewGraphAdapter:
@@ -41,7 +41,7 @@ class CodeReviewGraphAdapter:
         except ImportError as e:
             raise ImportError(
                 "code-review-graph is not installed. "
-                "Install with: pip install routa-fitness[graph]"
+                "Install with: pip install entrix[graph]"
             ) from e
 
     def build_or_update(self, *, full: bool = False, base: str = "HEAD~1") -> dict:

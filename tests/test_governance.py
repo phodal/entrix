@@ -1,12 +1,12 @@
-"""Tests for routa_fitness.governance."""
+"""Tests for entrix.governance."""
 
-from routa_fitness.governance import (
+from entrix.governance import (
     GovernancePolicy,
     enforce,
     filter_dimensions,
     filter_metrics,
 )
-from routa_fitness.model import Dimension, ExecutionScope, FitnessReport, Metric, Tier
+from entrix.model import Dimension, ExecutionScope, FitnessReport, Metric, Tier
 
 
 def test_filter_metrics_no_filter():

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from routa_fitness.model import Dimension, ExecutionScope, FitnessReport, Metric, Tier
+from entrix.model import Dimension, ExecutionScope, FitnessReport, Metric, Tier
 
 
 @dataclass

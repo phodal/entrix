@@ -1,11 +1,11 @@
-"""Tests for routa_fitness.file_budgets."""
+"""Tests for entrix.file_budgets."""
 
 from __future__ import annotations
 
 import argparse
 import json
 
-from routa_fitness.file_budgets import (
+from entrix.file_budgets import (
     _resolve_paths,
     BudgetOverride,
     FileBudgetConfig,
@@ -146,7 +146,7 @@ def test_evaluate_paths_uses_head_baseline_ratchet(tmp_path, monkeypatch):
     target.write_text("line\n" * 1201, encoding="utf-8")
 
     monkeypatch.setattr(
-        "routa_fitness.file_budgets.count_head_lines",
+        "entrix.file_budgets.count_head_lines",
         lambda *_args, **_kwargs: 1200,
     )
     violations = evaluate_paths(
@@ -167,7 +167,7 @@ def test_evaluate_paths_allows_changes_within_head_baseline(tmp_path, monkeypatc
     target.write_text("line\n" * 1199, encoding="utf-8")
 
     monkeypatch.setattr(
-        "routa_fitness.file_budgets.count_head_lines",
+        "entrix.file_budgets.count_head_lines",
         lambda *_args, **_kwargs: 1200,
     )
     violations = evaluate_paths(
@@ -190,7 +190,7 @@ def test_resolve_paths_filters_to_overrides_when_requested(tmp_path, monkeypatch
         paths=[],
     )
     monkeypatch.setattr(
-        "routa_fitness.file_budgets.list_changed_files",
+        "entrix.file_budgets.list_changed_files",
         lambda *_args, **_kwargs: [
             "crates/routa-server/src/application/tasks.rs",
             "src/app.ts",
@@ -218,7 +218,7 @@ def test_resolve_paths_passes_base_to_list_changed_files(tmp_path, monkeypatch):
         captured["base"] = base
         return ["src/app.ts"]
 
-    monkeypatch.setattr("routa_fitness.file_budgets.list_changed_files", _mock_list_changed_files)
+    monkeypatch.setattr("entrix.file_budgets.list_changed_files", _mock_list_changed_files)
 
     resolved = _resolve_paths(args, repo_root, make_config())
 

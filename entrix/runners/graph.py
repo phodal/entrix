@@ -6,9 +6,9 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-from routa_fitness.model import MetricResult, ResultState, Tier
-from routa_fitness.structure.adapter import try_create_adapter
-from routa_fitness.structure.impact import (
+from entrix.model import MetricResult, ResultState, Tier
+from entrix.structure.adapter import try_create_adapter
+from entrix.structure.impact import (
     classify_test_file,
     filter_code_files,
     git_changed_files,
@@ -40,8 +40,8 @@ class GraphRunner:
         return any(
             path.exists()
             for path in (
-                self.project_root / ".routa-fitness" / "index.json",
-                self.project_root / ".routa-fitness" / "graph.json",
+                self.project_root / ".entrix" / "index.json",
+                self.project_root / ".entrix" / "graph.json",
                 self.project_root / ".code-review-graph" / "graph.db",
             )
         )

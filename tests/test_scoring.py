@@ -1,7 +1,7 @@
-"""Tests for routa_fitness.scoring."""
+"""Tests for entrix.scoring."""
 
-from routa_fitness.model import MetricResult, ResultState, Tier
-from routa_fitness.scoring import score_dimension, score_report
+from entrix.model import MetricResult, ResultState, Tier
+from entrix.scoring import score_dimension, score_report
 
 
 def test_score_dimension_all_pass():

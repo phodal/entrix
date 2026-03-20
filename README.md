@@ -2,7 +2,7 @@
 
 **Guardrails Embedded in the Change Lifecycle**
 
-`routa-fitness` is the Python package behind Routa's fitness orchestration.
+`entrix` is a Python package for fitness orchestration inside the change lifecycle.
 It is built to keep verification close to the lifecycle of a change, not only at the tail end of CI.
 
 This package currently powers three kinds of decisions:
@@ -39,7 +39,7 @@ Possible outcomes:
 System foundation:
 
 ```text
-docs/fitness  ->  routa-fitness orchestration  ->  hard gates + weighted score + review triggers
+docs/fitness  ->  entrix orchestration  ->  hard gates + weighted score + review triggers
 ```
 
 Feedback loop:
@@ -63,7 +63,7 @@ Today the package provides:
 
 It is useful both as:
 
-- a repository-local fitness runner for Routa
+- a repository-local fitness runner for monorepos and application repos
 - the beginning of a more reusable fitness engine
 
 ## Installation
@@ -71,33 +71,33 @@ It is useful both as:
 ### Install from PyPI with `uv`
 
 ```bash
-uv tool install routa-fitness
+uv tool install entrix
 ```
 
 Run without installing globally:
 
 ```bash
-uvx routa-fitness --help
-uvx routa-fitness run --tier fast
-uvx routa-fitness review-trigger --base HEAD~1
+uvx entrix --help
+uvx entrix run --tier fast
+uvx entrix review-trigger --base HEAD~1
 ```
 
 ### Install from PyPI with `pip`
 
 ```bash
-pip install routa-fitness
+pip install entrix
 ```
 
 ### Run in a project without global install
 
 ```bash
-uvx --from routa-fitness routa-fitness --help
-uvx --from routa-fitness routa-fitness run --tier fast
+uvx --from entrix entrix --help
+uvx --from entrix entrix run --tier fast
 ```
 
 ### Develop the package itself from source
 
-If you are working on the `routa-fitness` package source itself, clone this repository and install it from the repository root.
+If you are working on the `entrix` package source itself, clone this repository and install it from the repository root.
 
 From the repository root:
 
@@ -119,7 +119,7 @@ pip install -e .
 
 ### 1. Create a fitness spec
 
-By default, `routa-fitness run` looks for specs under the current project's:
+By default, `entrix run` looks for specs under the current project's:
 
 ```text
 docs/fitness/*.md
@@ -157,10 +157,10 @@ Narrative evidence, rules, and ownership notes can live below the frontmatter.
 ### 2. Run the checks
 
 ```bash
-routa-fitness run --tier fast
-routa-fitness run --tier normal
-routa-fitness run --changed-only --base HEAD~1
-routa-fitness validate
+entrix run --tier fast
+entrix run --tier normal
+entrix run --changed-only --base HEAD~1
+entrix validate
 ```
 
 ### 3. Add review triggers
@@ -196,8 +196,8 @@ review_triggers:
 Run it:
 
 ```bash
-routa-fitness review-trigger --base HEAD~1
-routa-fitness review-trigger --base HEAD~1 --json
+entrix review-trigger --base HEAD~1
+entrix review-trigger --base HEAD~1 --json
 ```
 
 Example output:
@@ -229,51 +229,51 @@ Example output:
 
 ## Commands
 
-### `routa-fitness run`
+### `entrix run`
 
 Runs dimension-based fitness checks loaded from `docs/fitness/*.md`.
 
 Common flags:
 
 ```bash
-routa-fitness run --tier fast
-routa-fitness run --parallel
-routa-fitness run --dry-run
-routa-fitness run --verbose
-routa-fitness run --changed-only --base HEAD~1
+entrix run --tier fast
+entrix run --parallel
+entrix run --dry-run
+entrix run --verbose
+entrix run --changed-only --base HEAD~1
 ```
 
-### `routa-fitness validate`
+### `entrix validate`
 
 Checks that dimension weights sum to `100%`.
 
 ```bash
-routa-fitness validate
+entrix validate
 ```
 
-### `routa-fitness review-trigger`
+### `entrix review-trigger`
 
 Evaluates governance-oriented trigger rules for risky changes.
 
 Common flags:
 
 ```bash
-routa-fitness review-trigger --base HEAD~1
-routa-fitness review-trigger --json
-routa-fitness review-trigger --fail-on-trigger
-routa-fitness review-trigger --config docs/fitness/review-triggers.yaml
+entrix review-trigger --base HEAD~1
+entrix review-trigger --json
+entrix review-trigger --fail-on-trigger
+entrix review-trigger --config docs/fitness/review-triggers.yaml
 ```
 
-### `routa-fitness graph ...`
+### `entrix graph ...`
 
 Graph-backed commands support impact analysis, test radius, and AI-friendly review context.
 
 Examples:
 
 ```bash
-routa-fitness graph impact --base HEAD~1
-routa-fitness graph test-radius --base HEAD~1
-routa-fitness graph review-context --base HEAD~1 --json
+entrix graph impact --base HEAD~1
+entrix graph test-radius --base HEAD~1
+entrix graph review-context --base HEAD~1 --json
 ```
 
 ## AI-Friendly Authoring Notes
@@ -320,8 +320,8 @@ metrics:
 # Code Quality
 EOF
 
-routa-fitness validate
-routa-fitness run --tier fast
+entrix validate
+entrix run --tier fast
 ```
 
 ## Python API
@@ -331,7 +331,7 @@ routa-fitness run --tier fast
 ```python
 from pathlib import Path
 
-from routa_fitness.review_trigger import (
+from entrix.review_trigger import (
     collect_changed_files,
     collect_diff_stats,
     evaluate_review_triggers,
@@ -351,7 +351,7 @@ print(report.to_dict())
 ```python
 from pathlib import Path
 
-from routa_fitness.evidence import load_dimensions
+from entrix.evidence import load_dimensions
 
 dimensions = load_dimensions(Path("docs/fitness"))
 for dimension in dimensions:
@@ -364,7 +364,7 @@ For local repositories, a practical pattern is:
 
 - `pre-commit`: run quick lint only
 - `pre-push`: run full checks, then print review-trigger warnings
-- CI: run `routa-fitness run` and publish JSON/report output
+- CI: run `entrix run` and publish JSON/report output
 
 That lets automation catch deterministic failures early while still escalating ambiguous risky changes to humans.
 
@@ -372,7 +372,7 @@ That lets automation catch deterministic failures early while still escalating a
 
 Current constraints to be aware of:
 
-- the package name on PyPI is `routa-fitness`
+- the package name on PyPI is `entrix`
 - the default authoring format is still markdown frontmatter under `docs/fitness`
 - the project is evolving toward a cleaner core / adapter / preset split
 - graph commands require the optional graph dependency set
@@ -381,7 +381,7 @@ Current constraints to be aware of:
 
 Current status:
 
-- stable for Routa-internal usage
+- stable for production use inside the Routa monorepo
 - installable as a standalone PyPI package
 - suitable for AI-assisted project configuration
 - evolving toward a reusable fitness engine architecture

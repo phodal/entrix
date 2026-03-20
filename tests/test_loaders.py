@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from routa_fitness.loaders import load_dimensions, parse_frontmatter, validate_weights
-from routa_fitness.model import Dimension
+from entrix.loaders import load_dimensions, parse_frontmatter, validate_weights
+from entrix.model import Dimension
 
 
 def test_loader_parse_frontmatter():

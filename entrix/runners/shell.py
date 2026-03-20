@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import environ
 from pathlib import Path
 
-from routa_fitness.model import Gate, Metric, MetricResult, ResultState
+from entrix.model import Gate, Metric, MetricResult, ResultState
 
 
 class ShellRunner:

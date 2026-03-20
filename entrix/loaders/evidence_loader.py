@@ -9,7 +9,7 @@ from typing import TypeVar
 
 import yaml
 
-from routa_fitness.model import (
+from entrix.model import (
     AnalysisMode,
     Confidence,
     Dimension,

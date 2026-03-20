@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from routa_fitness.model import FitnessReport
+from entrix.model import FitnessReport
 
 
 def report_to_dict(report: FitnessReport) -> dict:

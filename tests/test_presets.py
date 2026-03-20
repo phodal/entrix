@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from routa_fitness.model import Metric
-from routa_fitness.presets import get_project_preset
+from entrix.model import Metric
+from entrix.presets import get_project_preset
 
 
 def test_get_project_preset_returns_routa_behavior():
@@ -18,7 +18,7 @@ def test_routa_preset_domains_from_files():
         [
             "crates/routa-server/src/main.rs",
             "src/app/page.tsx",
-            "tools/routa-fitness/routa_fitness/cli.py",
+            "tools/entrix/entrix/cli.py",
             "api-contract.yaml",
         ]
     )

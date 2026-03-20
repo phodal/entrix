@@ -1,6 +1,6 @@
-"""Tests for routa_fitness.model."""
+"""Tests for entrix.model."""
 
-from routa_fitness.model import (
+from entrix.model import (
     AnalysisMode,
     Confidence,
     Dimension,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from routa_fitness.model import Metric
+from entrix.model import Metric
 
 
 class RoutaPreset:
@@ -21,7 +21,7 @@ class RoutaPreset:
             (
                 "tmp/",
                 "docs/",
-                ".routa-fitness/",
+                ".entrix/",
                 ".code-review-graph/",
                 "node_modules/",
             )
@@ -38,7 +38,7 @@ class RoutaPreset:
             "eslint.config.mjs",
             "tsconfig.json",
             "pyproject.toml",
-            "tools/routa-fitness/file_budgets.json",
+            "tools/entrix/file_budgets.json",
         }
         for file_path in files:
             suffix = Path(file_path).suffix.lower()
@@ -50,7 +50,7 @@ class RoutaPreset:
                 ("src/", "apps/")
             ):
                 domains.add("web")
-            if suffix == ".py" or lowered.startswith("tools/routa-fitness/"):
+            if suffix == ".py" or lowered.startswith("tools/entrix/"):
                 domains.add("python")
             if file_path in config_files or name in config_files:
                 domains.add("config")
@@ -81,7 +81,7 @@ class RoutaPreset:
             )
         ):
             domains.add("web")
-        if "python" in command or "pytest" in command or "routa_fitness" in command:
+        if "python" in command or "pytest" in command or "entrix" in command:
             domains.add("python")
         if "audit" in command:
             domains.add("config")

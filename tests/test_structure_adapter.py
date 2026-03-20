@@ -1,8 +1,8 @@
-"""Tests for routa_fitness.structure.adapter."""
+"""Tests for entrix.structure.adapter."""
 
 from pathlib import Path
 
-from routa_fitness.structure.adapter import CodeReviewGraphAdapter
+from entrix.structure.adapter import CodeReviewGraphAdapter
 
 
 class FakeTools:

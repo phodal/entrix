@@ -1,10 +1,10 @@
-"""Tests for routa_fitness.engine."""
+"""Tests for entrix.engine."""
 
 from pathlib import Path
 
-import routa_fitness.engine as engine_module
-from routa_fitness.governance import GovernancePolicy
-from routa_fitness.model import (
+import entrix.engine as engine_module
+from entrix.governance import GovernancePolicy
+from entrix.model import (
     Dimension,
     EvidenceType,
     Metric,
@@ -12,7 +12,7 @@ from routa_fitness.model import (
     ResultState,
     Tier,
 )
-from routa_fitness.presets import get_project_preset
+from entrix.presets import get_project_preset
 
 
 class FakeShellRunner:

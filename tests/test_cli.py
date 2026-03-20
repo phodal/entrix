@@ -1,10 +1,10 @@
-"""Tests for routa_fitness.cli."""
+"""Tests for entrix.cli."""
 
-from routa_fitness.cli import _domains_from_files, _metric_domains, build_parser
-from routa_fitness.engine import matches_changed_files
-from routa_fitness.model import ExecutionScope, FitnessReport, Metric, MetricResult, ResultState, Tier
-from routa_fitness.presets import get_project_preset
-from routa_fitness.reporting import report_to_dict
+from entrix.cli import _domains_from_files, _metric_domains, build_parser
+from entrix.engine import matches_changed_files
+from entrix.model import ExecutionScope, FitnessReport, Metric, MetricResult, ResultState, Tier
+from entrix.presets import get_project_preset
+from entrix.reporting import report_to_dict
 
 
 def test_parser_run_defaults():
@@ -189,7 +189,7 @@ def test_parser_no_command():
 def test_parser_help_formats_without_error():
     parser = build_parser()
     help_text = parser.format_help()
-    assert "routa-fitness" in help_text
+    assert "entrix" in help_text
     assert "validate" in help_text
 
 
@@ -198,7 +198,7 @@ def test_domains_from_files():
         [
             "crates/routa-server/src/main.rs",
             "src/app/page.tsx",
-            "tools/routa-fitness/routa_fitness/cli.py",
+            "tools/entrix/entrix/cli.py",
             "api-contract.yaml",
         ]
     )

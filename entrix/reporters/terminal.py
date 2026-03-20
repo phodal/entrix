@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from routa_fitness.model import DimensionScore, FitnessReport, MetricResult, ResultState
+from entrix.model import DimensionScore, FitnessReport, MetricResult, ResultState
 
 
 class TerminalReporter:
