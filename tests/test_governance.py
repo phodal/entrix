@@ -70,6 +70,25 @@ def test_filter_dimensions_preserves_matching():
     assert result[0].metrics[0].name == "lint"
 
 
+def test_filter_dimensions_by_name():
+    dims = [
+        Dimension(name="code_quality", weight=24, metrics=[Metric(name="lint", command="x")]),
+        Dimension(name="security", weight=20, metrics=[Metric(name="audit", command="x")]),
+    ]
+    policy = GovernancePolicy(dimension_filters=("security",))
+    result = filter_dimensions(dims, policy)
+    assert [dimension.name for dimension in result] == ["security"]
+
+
+def test_filter_dimensions_by_name_is_case_insensitive():
+    dims = [
+        Dimension(name="observability", weight=0, metrics=[Metric(name="obs", command="x")]),
+    ]
+    policy = GovernancePolicy(dimension_filters=("Observability",))
+    result = filter_dimensions(dims, policy)
+    assert [dimension.name for dimension in result] == ["observability"]
+
+
 def test_filter_metrics_execution_scope():
     metrics = [
         Metric(name="local", command="x", execution_scope=ExecutionScope.LOCAL),

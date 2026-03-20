@@ -21,6 +21,7 @@ def test_parser_run_defaults():
     assert args.changed_only is False
     assert args.files == []
     assert args.base == "HEAD"
+    assert args.dimension == []
 
 
 def test_parser_run_all_flags():
@@ -45,6 +46,10 @@ def test_parser_run_all_flags():
             "crates/routa-server/src/lib.rs",
             "--base",
             "HEAD~2",
+            "--dimension",
+            "code_quality",
+            "--dimension",
+            "testability",
         ]
     )
     assert args.tier == "fast"
@@ -57,6 +62,7 @@ def test_parser_run_all_flags():
     assert args.changed_only is True
     assert args.files == ["src/app/page.tsx", "crates/routa-server/src/lib.rs"]
     assert args.base == "HEAD~2"
+    assert args.dimension == ["code_quality", "testability"]
 
 
 def test_parser_validate():

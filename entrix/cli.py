@@ -170,6 +170,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         verbose=args.verbose,
         min_score=args.min_score,
         execution_scope=execution_scope,
+        dimension_filters=tuple(args.dimension or ()),
     )
 
     reporter = TerminalReporter(verbose=policy.verbose)
@@ -467,6 +468,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--base",
         default="HEAD",
         help="Git base reference used by --changed-only",
+    )
+    run_parser.add_argument(
+        "--dimension",
+        action="append",
+        default=[],
+        help="Restrict execution to a dimension name; repeat to include multiple dimensions",
     )
     run_parser.set_defaults(func=cmd_run)
 

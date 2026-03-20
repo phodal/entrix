@@ -186,6 +186,7 @@ Narrative evidence, rules, and ownership notes can live below the frontmatter.
 ```bash
 entrix run --tier fast
 entrix run --tier normal
+entrix run --tier normal --scope ci --dimension code_quality --dimension testability
 entrix run --changed-only --base HEAD~1
 entrix validate
 ```

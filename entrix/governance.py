@@ -18,6 +18,7 @@ class GovernancePolicy:
     min_score: float = 80.0
     fail_on_hard_gate: bool = True
     execution_scope: ExecutionScope | None = None
+    dimension_filters: tuple[str, ...] = ()
 
 
 def _tier_passes_filter(metric_tier: Tier, filter_tier: Tier) -> bool:
@@ -44,7 +45,10 @@ def filter_dimensions(
 ) -> list[Dimension]:
     """Apply tier filtering to dimensions, returning only those with remaining metrics."""
     result: list[Dimension] = []
+    allowed_dimensions = {name.strip().lower() for name in policy.dimension_filters if name.strip()}
     for dim in dimensions:
+        if allowed_dimensions and dim.name.lower() not in allowed_dimensions:
+            continue
         filtered = filter_metrics(dim.metrics, policy)
         if filtered:
             result.append(

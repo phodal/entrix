@@ -126,3 +126,33 @@ def test_run_fitness_report_excludes_skipped_probe_from_score(monkeypatch, tmp_p
 
     assert report.dimensions[0].results[0].state == ResultState.SKIPPED
     assert report.dimensions[0].total == 0
+
+
+def test_run_fitness_report_filters_dimensions_from_policy(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(
+        engine_module,
+        "load_dimensions",
+        lambda _fitness_dir: [
+            Dimension(
+                name="code_quality",
+                weight=24,
+                metrics=[Metric(name="lint", command="npm run lint")],
+            ),
+            Dimension(
+                name="security",
+                weight=20,
+                metrics=[Metric(name="audit", command="npm audit")],
+            ),
+        ],
+    )
+    monkeypatch.setattr(engine_module, "ShellRunner", FakeShellRunner)
+    monkeypatch.setattr(engine_module, "GraphRunner", FakeGraphRunner)
+
+    report, dimensions = engine_module.run_fitness_report(
+        tmp_path,
+        GovernancePolicy(dimension_filters=("security",)),
+        get_project_preset(),
+    )
+
+    assert [dimension.name for dimension in dimensions] == ["security"]
+    assert [dimension.dimension for dimension in report.dimensions] == ["security"]
