@@ -2,33 +2,60 @@
 
 **Guardrails Embedded in the Change Lifecycle**
 
-`entrix` is a Python package for fitness orchestration inside the change lifecycle.
-It is built to keep verification close to the lifecycle of a change, not only at the tail end of CI.
+Entrix is a Harness Engineering tool for turning quality rules, architecture
+constraints, and validation steps into executable guardrails.
 
-This package currently powers three kinds of decisions:
+Instead of relying on manual review at the end of delivery, Entrix moves
+validation forward: checks become codified, evidence becomes traceable, and
+quality gates become part of the engineering system itself.
 
-- should the change pass baseline quality gates?
-- how much confidence do we have in the current change?
-- should a human reviewer be pulled in because the change is risky?
+It is designed for teams building in the AI era, where code can be generated
+faster than it can be governed.
+
+Entrix helps teams answer three questions continuously:
+
+- should this change pass baseline quality gates?
+- what level of confidence do we have in the current change?
+- when should the system route the change to deeper validation or human review?
 
 ## Lifecycle View
 
-```text
-The further to the right, the higher the fix cost,
-the lower the certainty of automation,
-and the more human judgment is required.
+```mermaid
+flowchart LR
+    A[Requirements / AI-generated Change] --> B[Rule Definition]
+    B --> C[Baseline Quality Gates]
+    C --> D[Risk Identification and Routing]
+    D --> E[Deep Validation]
+    E --> F[Release and Feedback]
 
-[Requirements / AI-generated change]
-        |
-        v
-[Rule Definition] -> [Baseline Quality Gates] -> [Risk Identification & Routing] -> [Deep Validation] -> [Release & Feedback]
-     |                      |                           |                             |                        |
-     |                      |                           |                             |                        |
-     |- metrics?            |- compile?                |- API/schema?                |- API parity?          |- merge / release
-     |- thresholds?         |- lint?                   |- impact radius?             |- E2E / visual?        |- update rules
-     |- hard gates?         |- tests?                  |- suspicious expansion?      |- semgrep / audit?     |- tune thresholds
-     |- evidence?           |- coverage?               |- missing evidence?          |- need human review?   |- close the loop
+    B -.-> B1[metrics]
+    B -.-> B2[thresholds]
+    B -.-> B3[hard gates]
+    B -.-> B4[evidence]
+
+    C -.-> C1[compile]
+    C -.-> C2[lint]
+    C -.-> C3[tests]
+    C -.-> C4[coverage]
+
+    D -.-> D1[API and schema]
+    D -.-> D2[impact radius]
+    D -.-> D3[suspicious expansion]
+    D -.-> D4[missing evidence]
+
+    E -.-> E1[API parity]
+    E -.-> E2[E2E and visual]
+    E -.-> E3[semgrep and audit]
+    E -.-> E4[human review]
+
+    F -.-> F1[merge and release]
+    F -.-> F2[update rules]
+    F -.-> F3[tune thresholds]
+    F -.-> F4[close the loop]
 ```
+
+The further to the right, the higher the fix cost, the lower the certainty of
+automation, and the more human judgment is required.
 
 Possible outcomes:
 
@@ -180,7 +207,7 @@ review_triggers:
     paths:
       - src/core/acp/**
       - src/core/orchestration/**
-      - crates/routa-server/src/api/**
+      - services/api/**
     severity: high
     action: require_human_review
 
@@ -207,7 +234,7 @@ Example output:
   "human_review_required": true,
   "base": "HEAD~1",
   "changed_files": [
-    "crates/routa-server/src/api/acp_routes.rs"
+    "services/api/src/routes/acp_routes.rs"
   ],
   "diff_stats": {
     "file_count": 13,
@@ -220,7 +247,7 @@ Example output:
       "severity": "high",
       "action": "require_human_review",
       "reasons": [
-        "changed path: crates/routa-server/src/api/acp_routes.rs"
+        "changed path: services/api/src/routes/acp_routes.rs"
       ]
     }
   ]
@@ -381,7 +408,7 @@ Current constraints to be aware of:
 
 Current status:
 
-- stable for production use inside the Routa monorepo
+- stable for production use in real repository workflows
 - installable as a standalone PyPI package
 - suitable for AI-assisted project configuration
 - evolving toward a reusable fitness engine architecture
