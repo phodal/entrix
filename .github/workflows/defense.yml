@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   fitness:
-    name: Gate: Fitness
+    name: "Gate: Fitness"
     runs-on: ubuntu-latest
 
     steps:
