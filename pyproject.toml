@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "entrix"
-version = "0.1.4"
+version = "0.1.6"
 description = "Change-lifecycle guardrails for architecture fitness, risk routing, and review triggers"
 readme = "README.md"
 license = { text = "MIT" }
