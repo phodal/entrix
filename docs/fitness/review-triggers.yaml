@@ -1,0 +1,28 @@
+review_triggers:
+  - name: core_engine_change
+    type: changed_paths
+    paths:
+      - entrix/cli.py
+      - entrix/engine.py
+      - entrix/governance.py
+      - entrix/review_trigger.py
+      - entrix/presets/**
+    severity: high
+    action: require_human_review
+
+  - name: packaging_or_workflow_change
+    type: changed_paths
+    paths:
+      - pyproject.toml
+      - .github/workflows/**
+      - docs/fitness/**
+    severity: medium
+    action: require_human_review
+
+  - name: oversized_change
+    type: diff_size
+    max_files: 10
+    max_added_lines: 400
+    max_deleted_lines: 250
+    severity: medium
+    action: require_human_review

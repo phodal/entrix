@@ -1,0 +1,122 @@
+name: Defense
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fitness:
+    name: Gate: Fitness
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install local verification tools
+        run: |
+          python -m pip install pytest ruff build hatchling
+
+      - name: Resolve diff base
+        id: base
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          base=""
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$PR_BASE_SHA" ]; then
+            base="$PR_BASE_SHA"
+          elif [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            base="$PUSH_BEFORE_SHA"
+          elif git rev-parse HEAD~1 >/dev/null 2>&1; then
+            base="HEAD~1"
+          else
+            base="HEAD"
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "ENTRIX_FITNESS_BASE=$base" >> "$GITHUB_ENV"
+
+      - name: Validate fitness spec with published entrix
+        run: uvx --from entrix entrix validate
+
+      - name: Run fitness with published entrix
+        run: |
+          mkdir -p .artifacts
+          uvx --from entrix entrix run \
+            --parallel \
+            --tier normal \
+            --scope ci \
+            --min-score 0 \
+            --output .artifacts/fitness-report.json
+
+      - name: Evaluate review triggers with published entrix
+        run: |
+          uvx --from entrix entrix review-trigger \
+            --base "${{ steps.base.outputs.base }}" \
+            --json \
+            > .artifacts/review-trigger-report.json
+
+      - name: Write step summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          summary_path = Path(".artifacts")
+          fitness_path = summary_path / "fitness-report.json"
+          trigger_path = summary_path / "review-trigger-report.json"
+          lines = ["## Defense Summary", ""]
+
+          if fitness_path.exists():
+              payload = json.loads(fitness_path.read_text(encoding="utf-8"))
+              lines.append(f"- Fitness final score: {payload.get('final_score', 0):.1f}")
+              lines.append(
+                  f"- Hard gate blocked: {payload.get('hard_gate_blocked', False)}"
+              )
+              for dimension in payload.get("dimensions", []):
+                  lines.append(
+                      f"- {dimension['name']}: score={dimension['score']:.1f} "
+                      f"passed={dimension['passed']}/{dimension['total']}"
+                  )
+
+          if trigger_path.exists():
+              report = json.loads(trigger_path.read_text(encoding="utf-8"))
+              lines.append("")
+              lines.append(
+                  f"- Human review required: {report.get('human_review_required', False)}"
+              )
+              for trigger in report.get("triggers", []):
+                  lines.append(f"- Trigger: {trigger['name']} [{trigger['severity']}]")
+
+          Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text(
+              "\n".join(lines) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload governance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: entrix-defense-artifacts
+          path: .artifacts/

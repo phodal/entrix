@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from entrix.engine import collect_changed_files, matches_changed_files, run_fitness_report
+from entrix.engine import collect_changed_files, run_fitness_report
 from entrix.governance import GovernancePolicy, enforce
 from entrix.loaders import load_dimensions, validate_weights
 from entrix.model import ExecutionScope, Metric, ResultState, Tier

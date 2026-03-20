@@ -8,9 +8,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-
-
 @dataclass(frozen=True)
 class BudgetOverride:
     """Path-specific file line budget."""

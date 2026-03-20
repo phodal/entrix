@@ -20,6 +20,8 @@ Run the same baseline checks as CI before opening a pull request:
 ruff check .
 pytest
 python -m build
+python3 -m entrix validate
+python3 -m entrix run --tier normal --min-score 0
 ```
 
 ## Pull Requests
