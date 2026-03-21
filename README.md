@@ -390,11 +390,30 @@ for dimension in dimensions:
 
 For local repositories, a practical pattern is:
 
-- `pre-commit`: run quick lint only
+- `pre-commit`: run `entrix hook file-length` first, then quick lint
 - `pre-push`: run full checks, then print review-trigger warnings
 - CI: run `entrix run` and publish JSON/report output
 
 That lets automation catch deterministic failures early while still escalating ambiguous risky changes to humans.
+
+### Reusable file-length guard
+
+`entrix` now exposes a reusable hook entrypoint:
+
+```bash
+python3 -m entrix hook file-length \
+  --config tools/entrix/file_budgets.pre_commit.json \
+  --staged-only \
+  --strict-limit
+```
+
+Use it when you want AI-friendly oversized-file failures during `pre-commit`, for example:
+
+```text
+current file length 2383 exceeds limit 1500: src/app/page.tsx
+```
+
+A copy-pasteable template lives in [`examples/file-length-hook/`](examples/file-length-hook/).
 
 ## Known Constraints
 
