@@ -99,6 +99,16 @@ def test_filter_metrics_execution_scope():
     assert [metric.name for metric in result] == ["staging"]
 
 
+def test_filter_metrics_by_name_is_case_insensitive():
+    metrics = [
+        Metric(name="eslint_pass", command="x", tier=Tier.FAST),
+        Metric(name="ts_typecheck_pass", command="x", tier=Tier.FAST),
+    ]
+    policy = GovernancePolicy(metric_filters=("Ts_Typecheck_Pass",))
+    result = filter_metrics(metrics, policy)
+    assert [metric.name for metric in result] == ["ts_typecheck_pass"]
+
+
 def test_enforce_pass():
     report = FitnessReport(final_score=95.0, hard_gate_blocked=False, score_blocked=False)
     assert enforce(report, GovernancePolicy()) == 0

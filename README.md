@@ -187,9 +187,12 @@ Narrative evidence, rules, and ownership notes can live below the frontmatter.
 entrix run --tier fast
 entrix run --tier normal
 entrix run --tier normal --scope ci --dimension code_quality --dimension testability
+entrix run --tier fast --metric eslint_pass --metric ts_typecheck_pass
 entrix run --changed-only --base HEAD~1
 entrix validate
 ```
+
+Use `--metric` when you want to run only specific metric names without creating a temporary dimension file split.
 
 ### 3. Add review triggers
 

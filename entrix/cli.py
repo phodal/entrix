@@ -172,6 +172,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         min_score=args.min_score,
         execution_scope=execution_scope,
         dimension_filters=tuple(args.dimension or ()),
+        metric_filters=tuple(args.metric or ()),
     )
 
     reporter = TerminalReporter(verbose=policy.verbose)
@@ -516,6 +517,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Restrict execution to a dimension name; repeat to include multiple dimensions",
+    )
+    run_parser.add_argument(
+        "--metric",
+        action="append",
+        default=[],
+        help="Restrict execution to a metric name; repeat to include multiple metrics",
     )
     run_parser.set_defaults(func=cmd_run)
 

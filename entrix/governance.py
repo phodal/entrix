@@ -19,6 +19,7 @@ class GovernancePolicy:
     fail_on_hard_gate: bool = True
     execution_scope: ExecutionScope | None = None
     dimension_filters: tuple[str, ...] = ()
+    metric_filters: tuple[str, ...] = ()
 
 
 def _tier_passes_filter(metric_tier: Tier, filter_tier: Tier) -> bool:
@@ -37,6 +38,9 @@ def filter_metrics(metrics: list[Metric], policy: GovernancePolicy) -> list[Metr
         result = [m for m in result if _tier_passes_filter(m.tier, policy.tier_filter)]
     if policy.execution_scope is not None:
         result = [m for m in result if m.execution_scope == policy.execution_scope]
+    allowed_metrics = {name.strip().lower() for name in policy.metric_filters if name.strip()}
+    if allowed_metrics:
+        result = [m for m in result if m.name.lower() in allowed_metrics]
     return result
 
 
