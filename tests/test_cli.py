@@ -104,6 +104,27 @@ def test_parser_review_trigger_flags():
     assert args.files == ["src/core/acp/foo.ts"]
 
 
+def test_parser_hook_file_length_flags():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "hook",
+            "file-length",
+            "--config",
+            "tools/entrix/file_budgets.pre_commit.json",
+            "--staged-only",
+            "--strict-limit",
+            "src/app/page.tsx",
+        ]
+    )
+    assert args.command == "hook"
+    assert args.hook_command == "file-length"
+    assert args.config == "tools/entrix/file_budgets.pre_commit.json"
+    assert args.staged_only is True
+    assert args.strict_limit is True
+    assert args.files == ["src/app/page.tsx"]
+
+
 def test_parser_graph_impact_defaults():
     parser = build_parser()
     args = parser.parse_args(["graph", "impact"])

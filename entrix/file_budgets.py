@@ -8,6 +8,8 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+
 @dataclass(frozen=True)
 class BudgetOverride:
     """Path-specific file line budget."""
@@ -111,20 +113,22 @@ def count_head_lines(repo_root: Path, relative_path: str) -> int | None:
     return len(result.stdout.splitlines())
 
 
-def list_changed_files(repo_root: Path, base: str = "HEAD") -> list[str]:
+def list_changed_files(repo_root: Path, base: str = "HEAD", staged_only: bool = False) -> list[str]:
     """List changed files from git."""
-    result = subprocess.run(
+    command = ["git", "diff"]
+    if staged_only:
+        command.append("--cached")
+    command.extend(
         [
-            "git",
-            "diff",
             "--name-only",
             "--diff-filter=ACMR",
-            base,
-            "--",
-            "src",
-            "apps",
-            "crates",
-        ],
+        ]
+    )
+    if not staged_only:
+        command.append(base)
+    command.extend(["--", *config_roots_for_git_diff(repo_root)])
+    result = subprocess.run(
+        command,
         cwd=repo_root,
         capture_output=True,
         text=True,
@@ -135,10 +139,18 @@ def list_changed_files(repo_root: Path, base: str = "HEAD") -> list[str]:
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
+def config_roots_for_git_diff(repo_root: Path) -> list[str]:
+    """Return common code roots that may contain tracked source files."""
+    roots = ["src", "apps", "crates", "scripts", "tests", "e2e", "tools"]
+    return [root for root in roots if (repo_root / root).exists()]
+
+
 def evaluate_paths(
     repo_root: Path,
     relative_paths: list[str],
     config: FileBudgetConfig,
+    *,
+    use_head_ratchet: bool = True,
 ) -> list[FileBudgetViolation]:
     """Evaluate file size budgets for the given relative paths."""
     violations: list[FileBudgetViolation] = []
@@ -151,12 +163,13 @@ def evaluate_paths(
             continue
 
         configured_max_lines, reason = resolve_budget(relative_path, config)
-        baseline_lines = count_head_lines(repo_root, relative_path)
         max_lines = configured_max_lines
-        if baseline_lines is not None:
-            max_lines = max(max_lines, baseline_lines)
-            if baseline_lines > configured_max_lines and not reason:
-                reason = f"legacy hotspot frozen at HEAD baseline ({baseline_lines} lines)"
+        if use_head_ratchet:
+            baseline_lines = count_head_lines(repo_root, relative_path)
+            if baseline_lines is not None:
+                max_lines = max(max_lines, baseline_lines)
+                if baseline_lines > configured_max_lines and not reason:
+                    reason = f"legacy hotspot frozen at HEAD baseline ({baseline_lines} lines)"
         line_count = count_lines(file_path)
         if line_count > max_lines:
             violations.append(
@@ -189,9 +202,19 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="Only evaluate files changed against HEAD.",
     )
     parser.add_argument(
+        "--staged-only",
+        action="store_true",
+        help="Only evaluate staged files in the git index.",
+    )
+    parser.add_argument(
         "--base",
         default="HEAD",
         help="Git base ref used by --changed-only.",
+    )
+    parser.add_argument(
+        "--strict-limit",
+        action="store_true",
+        help="Ignore HEAD ratcheting and enforce configured limits directly.",
     )
     parser.add_argument(
         "--overrides-only",
@@ -207,6 +230,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def _resolve_paths(args: argparse.Namespace, repo_root: Path, config: FileBudgetConfig) -> list[str]:
+    if getattr(args, "staged_only", False):
+        paths = list_changed_files(repo_root, staged_only=True)
+        if args.overrides_only:
+            override_paths = {override.path for override in config.overrides}
+            return [path for path in paths if path in override_paths]
+        return paths
     if args.changed_only:
         paths = list_changed_files(repo_root, args.base)
         if args.overrides_only:
@@ -235,7 +264,12 @@ def main(argv: list[str] | None = None) -> int:
     repo_root = Path(args.repo_root).resolve()
     config = load_config(Path(args.config))
     relative_paths = _resolve_paths(args, repo_root, config)
-    violations = evaluate_paths(repo_root, relative_paths, config)
+    violations = evaluate_paths(
+        repo_root,
+        relative_paths,
+        config,
+        use_head_ratchet=not args.strict_limit,
+    )
 
     checked_count = sum(1 for path in set(relative_paths) if is_tracked_source_file(path, config))
     print(f"file_budget_checked: {checked_count}")
@@ -243,8 +277,8 @@ def main(argv: list[str] | None = None) -> int:
     for violation in violations:
         reason = f" | {violation.reason}" if violation.reason else ""
         print(
-            f"{violation.path}: {violation.line_count} lines > "
-            f"budget {violation.max_lines}{reason}"
+            f"current file length {violation.line_count} exceeds limit "
+            f"{violation.max_lines}: {violation.path}{reason}"
         )
 
     return 1 if violations else 0

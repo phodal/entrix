@@ -100,6 +100,27 @@ def test_evaluate_paths_applies_default_budget(tmp_path):
     assert violations[0].max_lines == 1000
 
 
+def test_evaluate_paths_strict_limit_ignores_head_baseline(tmp_path, monkeypatch):
+    repo_root = tmp_path
+    target = repo_root / "src" / "app.ts"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("line\n" * 1001, encoding="utf-8")
+
+    monkeypatch.setattr(
+        "entrix.file_budgets.count_head_lines",
+        lambda *_args, **_kwargs: 1200,
+    )
+    violations = evaluate_paths(
+        repo_root,
+        ["src/app.ts"],
+        make_config(),
+        use_head_ratchet=False,
+    )
+
+    assert len(violations) == 1
+    assert violations[0].max_lines == 1000
+
+
 def test_evaluate_paths_allows_legacy_hotspot_within_override(tmp_path):
     repo_root = tmp_path
     target = repo_root / "crates" / "routa-server" / "src" / "application" / "tasks.rs"
@@ -224,3 +245,28 @@ def test_resolve_paths_passes_base_to_list_changed_files(tmp_path, monkeypatch):
 
     assert resolved == ["src/app.ts"]
     assert captured["base"] == "HEAD~5"
+
+
+def test_resolve_paths_uses_staged_files_when_requested(tmp_path, monkeypatch):
+    repo_root = tmp_path
+    captured = {"staged_only": None}
+    args = argparse.Namespace(
+        config="unused",
+        repo_root=".",
+        changed_only=False,
+        staged_only=True,
+        base="HEAD",
+        overrides_only=False,
+        paths=[],
+    )
+
+    def _mock_list_changed_files(_repo_root, base="HEAD", staged_only=False):
+        captured["staged_only"] = staged_only
+        return ["src/app.ts"]
+
+    monkeypatch.setattr("entrix.file_budgets.list_changed_files", _mock_list_changed_files)
+
+    resolved = _resolve_paths(args, repo_root, make_config())
+
+    assert resolved == ["src/app.ts"]
+    assert captured["staged_only"] is True

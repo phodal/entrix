@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from entrix.engine import collect_changed_files, run_fitness_report
+from entrix.file_budgets import evaluate_paths, is_tracked_source_file, load_config
 from entrix.governance import GovernancePolicy, enforce
 from entrix.loaders import load_dimensions, validate_weights
 from entrix.model import ExecutionScope, Metric, ResultState, Tier
@@ -424,6 +425,47 @@ def cmd_graph_review_context(args: argparse.Namespace) -> int:
     return 0 if result.get("status") != "unavailable" else 1
 
 
+def cmd_hook_file_length(args: argparse.Namespace) -> int:
+    """Run a reusable file-length guard suitable for pre-commit hooks."""
+    project_root = _find_project_root()
+    config = load_config(Path(args.config).resolve())
+    relative_paths = args.files or []
+    if not relative_paths:
+        file_budget_args = argparse.Namespace(
+            changed_only=False,
+            staged_only=args.staged_only,
+            base=args.base,
+            overrides_only=False,
+            paths=[],
+        )
+        from entrix.file_budgets import _resolve_paths
+
+        relative_paths = _resolve_paths(file_budget_args, project_root, config)
+
+    violations = evaluate_paths(
+        project_root,
+        relative_paths,
+        config,
+        use_head_ratchet=not args.strict_limit,
+    )
+
+    checked_count = sum(
+        1 for path in set(relative_paths) if is_tracked_source_file(path, config)
+    )
+    print(f"file_budget_checked: {checked_count}")
+    print(f"file_budget_violations: {len(violations)}")
+    for violation in violations:
+        reason = f" | {violation.reason}" if violation.reason else ""
+        print(
+            f"current file length {violation.line_count} exceeds limit "
+            f"{violation.max_lines}: {violation.path}{reason}"
+        )
+    if violations:
+        print("Refactor the oversized file before commit.")
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="entrix",
@@ -494,6 +536,36 @@ def build_parser() -> argparse.ArgumentParser:
     )
     review_trigger_parser.add_argument("--json", action="store_true", help="Emit JSON output")
     review_trigger_parser.set_defaults(func=cmd_review_trigger)
+
+    hook_parser = subparsers.add_parser("hook", help="Reusable local hook helpers")
+    hook_subparsers = hook_parser.add_subparsers(dest="hook_command")
+
+    hook_file_length = hook_subparsers.add_parser(
+        "file-length",
+        help="Fail when staged or explicit source files exceed the configured line budget",
+    )
+    hook_file_length.add_argument(
+        "--config",
+        required=True,
+        help="Path to a JSON file with file size budget configuration.",
+    )
+    hook_file_length.add_argument(
+        "--staged-only",
+        action="store_true",
+        help="Evaluate only staged files from the git index.",
+    )
+    hook_file_length.add_argument(
+        "--strict-limit",
+        action="store_true",
+        help="Ignore HEAD ratcheting and enforce configured limits directly.",
+    )
+    hook_file_length.add_argument(
+        "--base",
+        default="HEAD",
+        help="Compatibility flag for changed-only style integrations.",
+    )
+    hook_file_length.add_argument("files", nargs="*", help="Optional explicit relative paths to evaluate")
+    hook_file_length.set_defaults(func=cmd_hook_file_length)
 
     graph_parser = subparsers.add_parser("graph", help="Graph-backed impact and test-radius analysis")
     graph_subparsers = graph_parser.add_subparsers(dest="graph_command")
@@ -631,6 +703,9 @@ def main() -> None:
 
     if args.command == "graph" and not getattr(args, "graph_command", None):
         parser.parse_args(["graph", "--help"])
+        return
+    if args.command == "hook" and not getattr(args, "hook_command", None):
+        parser.parse_args(["hook", "--help"])
         return
 
     exit_code = args.func(args)
