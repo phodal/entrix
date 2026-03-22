@@ -68,6 +68,7 @@ def test_analyze_long_file_explicit_typescript_file(tmp_path: Path):
     assert analysis["lineCount"] == 9
     assert analysis["budgetLimit"] == 1000
     assert analysis["overBudget"] is False
+    assert analysis["commitCount"] == 0
     assert analysis["classes"][0]["name"] == "Runner"
     assert analysis["classes"][0]["methodCount"] == 1
     assert analysis["classes"][0]["methods"][0]["name"] == "run"
@@ -121,3 +122,22 @@ def test_analyze_long_file_defaults_to_oversized_files(tmp_path: Path):
     assert [item["filePath"] for item in result["files"]] == ["src/large.ts"]
     assert result["files"][0]["overBudget"] is True
     assert [fn["name"] for fn in result["files"][0]["functions"]] == ["a", "b"]
+
+
+def test_analyze_long_file_includes_commit_count(monkeypatch, tmp_path: Path):
+    _write_budget_config(tmp_path / "tools" / "entrix" / "file_budgets.json")
+    _write(
+        tmp_path / "src" / "runner.ts",
+        "function helper() {\n"
+        "  return 1;\n"
+        "}\n",
+    )
+
+    monkeypatch.setattr(
+        "entrix.analysis.long_file._count_file_commits",
+        lambda repo_root, relative_path: 7,
+    )
+
+    result = analyze_long_files(tmp_path, files=["src/runner.ts"])
+
+    assert result["files"][0]["commitCount"] == 7

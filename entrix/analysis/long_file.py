@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -133,6 +134,7 @@ def _analyze_single_file(
         use_head_ratchet=use_head_ratchet,
     )
     classes, functions = _build_maps(relative_path, parsed["symbols"])
+    commit_count = _count_file_commits(repo_root, relative_path)
 
     return {
         "filePath": relative_path,
@@ -141,6 +143,7 @@ def _analyze_single_file(
         "budgetLimit": budget_limit,
         "budgetReason": budget_reason,
         "overBudget": line_count > budget_limit,
+        "commitCount": commit_count,
         "classes": classes,
         "functions": functions,
     }
@@ -223,3 +226,16 @@ def _to_function_map(symbol: dict[str, Any]) -> dict[str, Any]:
         "kind": kind,
         "parentClassName": parent_name,
     }
+
+
+def _count_file_commits(repo_root: Path, relative_path: str) -> int:
+    result = subprocess.run(
+        ["git", "log", "--follow", "--format=%H", "--", relative_path],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return 0
+    return sum(1 for line in result.stdout.splitlines() if line.strip())

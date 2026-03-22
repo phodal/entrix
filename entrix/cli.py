@@ -143,6 +143,7 @@ def _print_long_file_analysis(result: dict, *, min_lines: int = 60) -> None:
             else f"{item['filePath']} has {item['lineCount']} lines (budget {item['budgetLimit']})"
         )
         print(status_line)
+        print(f"History: commits={item.get('commitCount', 0)}")
 
         classes = sorted(
             item.get("classes", []),
