@@ -131,6 +131,35 @@ def test_parser_hook_file_length_flags():
     assert args.files == ["src/app/page.tsx"]
 
 
+def test_parser_analyze_long_file_flags():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "analyze",
+            "long-file",
+            "--files",
+            "src/a.ts",
+            "src/b.py",
+            "--base",
+            "HEAD~2",
+            "--config",
+            "tools/entrix/file_budgets.json",
+            "--strict-limit",
+            "--min-lines",
+            "80",
+            "--json",
+        ]
+    )
+    assert args.command == "analyze"
+    assert args.analyze_command == "long-file"
+    assert args.files == ["src/a.ts", "src/b.py"]
+    assert args.base == "HEAD~2"
+    assert args.config == "tools/entrix/file_budgets.json"
+    assert args.strict_limit is True
+    assert args.min_lines == 80
+    assert args.json is True
+
+
 def test_parser_graph_impact_defaults():
     parser = build_parser()
     args = parser.parse_args(["graph", "impact"])

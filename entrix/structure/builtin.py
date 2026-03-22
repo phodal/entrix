@@ -293,6 +293,25 @@ class BuiltinGraphAdapter:
             "backend": "builtin-tree-sitter",
         }
 
+    def analyze_file(self, rel_path: str) -> dict[str, Any]:
+        """Parse a single file and return its language/symbol record."""
+        normalized = self._resolve_repo_relative_path(rel_path)
+        if not normalized:
+            return {"status": "not_found", "summary": f"No file found matching '{rel_path}'."}
+
+        abs_path = self.repo_root / normalized
+        if not abs_path.exists() or not abs_path.is_file():
+            return {"status": "not_found", "summary": f"No file found matching '{rel_path}'."}
+        if Path(normalized).suffix.lower() not in _CODE_EXTENSIONS:
+            return {"status": "unsupported", "summary": f"Unsupported file type for '{normalized}'."}
+
+        record = self._parse_file(normalized, abs_path.read_bytes())
+        return {
+            "status": "ok",
+            "file_path": normalized,
+            **record,
+        }
+
     def _load_file_data(self) -> dict[str, Any]:
         if self._file_data is not None:
             return self._file_data
@@ -1029,12 +1048,21 @@ class BuiltinGraphAdapter:
         return None
 
     def _resolve_file_target(self, index: dict[str, Any], target: str) -> str | None:
-        if target in index["file_nodes"]:
-            return target
-        normalized = target.removeprefix(str(self.repo_root)).lstrip("/")
-        if normalized in index["file_nodes"]:
+        normalized = self._resolve_repo_relative_path(target)
+        if normalized and normalized in index["file_nodes"]:
             return normalized
         return None
+
+    def _resolve_repo_relative_path(self, target: str) -> str | None:
+        if target.startswith(str(self.repo_root)):
+            normalized = target.removeprefix(str(self.repo_root)).lstrip("/")
+        else:
+            normalized = target
+        candidate = self.repo_root / normalized
+        try:
+            return candidate.resolve().relative_to(self.repo_root.resolve()).as_posix()
+        except ValueError:
+            return None
 
     def _query_result(
         self,

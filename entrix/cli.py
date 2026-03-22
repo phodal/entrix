@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from entrix.analysis.long_file import analyze_long_files
 from entrix.engine import collect_changed_files, run_fitness_report
 from entrix.file_budgets import evaluate_paths, is_tracked_source_file, load_config
 from entrix.governance import GovernancePolicy, enforce
@@ -117,6 +118,63 @@ def _print_graph_review_context(result: dict) -> None:
         for snippet in snippets[:10]:
             suffix = " (truncated)" if snippet.get("truncated") else ""
             print(f"  - {snippet['file_path']}{suffix}")
+
+
+def _format_line_span(item: dict) -> str:
+    return f"L{item['startLine']}-{item['endLine']}, {item['lineCount']}"
+
+
+def _format_compact_items(items: list[dict]) -> str:
+    return ", ".join(f"{item['name']} ({_format_line_span(item)})" for item in items)
+
+
+def _print_long_file_analysis(result: dict, *, min_lines: int = 60) -> None:
+    files = result.get("files", [])
+    if not files:
+        print("No oversized files detected.")
+        return
+    for item in files:
+        if item.get("status") not in {None, "ok"}:
+            print(f"{item['filePath']}: {item.get('summary', 'analysis failed')}")
+            continue
+        status_line = (
+            f"{item['filePath']} exceeds budget {item['budgetLimit']} with {item['lineCount']} lines"
+            if item.get("overBudget")
+            else f"{item['filePath']} has {item['lineCount']} lines (budget {item['budgetLimit']})"
+        )
+        print(status_line)
+
+        classes = sorted(
+            item.get("classes", []),
+            key=lambda cls: (cls["startLine"], cls["name"]),
+        )
+        functions = sorted(
+            item.get("functions", []),
+            key=lambda fn: (fn["startLine"], fn["name"]),
+        )
+        print(f"Classes: {len(classes)}")
+        if classes:
+            for cls in classes:
+                print(f"- {cls['name']} ({_format_line_span(cls)})")
+        else:
+            print("- none")
+
+        print("")
+        print(f"Functions: {len(functions)}")
+        if not functions:
+            print("- none")
+            continue
+
+        large = [fn for fn in functions if fn["lineCount"] >= min_lines]
+        small = [fn for fn in functions if fn["lineCount"] <= 10]
+        medium = [fn for fn in functions if 10 < fn["lineCount"] < min_lines]
+
+        if small:
+            print(f"- Small helpers: {_format_compact_items(small)}")
+        if medium:
+            print(f"- Medium: {_format_compact_items(medium)}")
+        if large:
+            print(f"- Large: {_format_compact_items(large)}")
 
 
 def _print_review_trigger_report(report: dict) -> None:
@@ -467,6 +525,26 @@ def cmd_hook_file_length(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_analyze_long_file(args: argparse.Namespace) -> int:
+    """Analyze oversized or explicit files into ClassMap/FunctionMap payloads."""
+    project_root = _find_project_root()
+    result = analyze_long_files(
+        project_root,
+        files=args.files or None,
+        config_path=Path(args.config).resolve() if args.config else None,
+        base=args.base,
+        use_head_ratchet=not args.strict_limit,
+    )
+    if result.get("status") == "unavailable":
+        print(result.get("summary", "Long-file analysis unavailable"))
+        return 1
+    if args.json:
+        _print_json(result)
+    else:
+        _print_long_file_analysis(result, min_lines=args.min_lines)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="entrix",
@@ -573,6 +651,33 @@ def build_parser() -> argparse.ArgumentParser:
     )
     hook_file_length.add_argument("files", nargs="*", help="Optional explicit relative paths to evaluate")
     hook_file_length.set_defaults(func=cmd_hook_file_length)
+
+    analyze_parser = subparsers.add_parser("analyze", help="Structured source analysis helpers")
+    analyze_subparsers = analyze_parser.add_subparsers(dest="analyze_command")
+
+    analyze_long_file = analyze_subparsers.add_parser(
+        "long-file",
+        help="Return ClassMap/FunctionMap payloads for oversized or explicit files",
+    )
+    analyze_long_file.add_argument("--files", nargs="*", default=[], help="Explicit files to analyze")
+    analyze_long_file.add_argument("--base", default="HEAD", help="Git base reference for implicit oversized-file discovery")
+    analyze_long_file.add_argument(
+        "--config",
+        help="Path to a JSON file with file size budget configuration.",
+    )
+    analyze_long_file.add_argument(
+        "--strict-limit",
+        action="store_true",
+        help="Ignore HEAD ratcheting and enforce configured limits directly.",
+    )
+    analyze_long_file.add_argument(
+        "--min-lines",
+        type=int,
+        default=60,
+        help="Hide text-report items smaller than this many lines (JSON output is unaffected).",
+    )
+    analyze_long_file.add_argument("--json", action="store_true", help="Emit JSON output")
+    analyze_long_file.set_defaults(func=cmd_analyze_long_file)
 
     graph_parser = subparsers.add_parser("graph", help="Graph-backed impact and test-radius analysis")
     graph_subparsers = graph_parser.add_subparsers(dest="graph_command")
@@ -713,6 +818,9 @@ def main() -> None:
         return
     if args.command == "hook" and not getattr(args, "hook_command", None):
         parser.parse_args(["hook", "--help"])
+        return
+    if args.command == "analyze" and not getattr(args, "analyze_command", None):
+        parser.parse_args(["analyze", "--help"])
         return
 
     exit_code = args.func(args)
