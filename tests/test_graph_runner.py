@@ -297,3 +297,18 @@ def test_review_context_includes_guidance_and_source(monkeypatch, tmp_path: Path
     assert result["context"]["tests"]["test_files"] == ["src/service.test.ts"]
     assert result["context"]["source_snippets"][0]["file_path"] == "src/service.ts"
     assert "lack direct or inherited tests" in result["context"]["review_guidance"]
+
+
+def test_probe_test_coverage_skips_when_no_changed_files(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(graph_module, "try_create_adapter", lambda _: FakeAdapter())
+
+    runner = GraphRunner(tmp_path)
+    result = runner.probe_test_coverage([])
+
+    assert result.state is not None
+    assert result.state.value == "skipped"
+    assert result.output == (
+        "graph_test_coverage: skipped (no changed files)\n"
+        "changed_files: 0\n"
+        "test_files_in_radius: 0"
+    )

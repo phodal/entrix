@@ -516,13 +516,27 @@ class GraphRunner:
                 state=ResultState.SKIPPED,
             )
 
+        changed_count = len(radius.get("changed_files", []))
+        if changed_count == 0:
+            return MetricResult(
+                metric_name="graph_test_coverage",
+                passed=False,
+                output=(
+                    "graph_test_coverage: skipped (no changed files)\n"
+                    "changed_files: 0\n"
+                    "test_files_in_radius: 0"
+                ),
+                tier=Tier.NORMAL,
+                state=ResultState.SKIPPED,
+            )
+
         test_files = radius.get("test_files", [])
         return MetricResult(
             metric_name="graph_test_coverage",
             passed=len(test_files) > 0,
             output=(
                 f"graph_test_coverage: {'ok' if test_files else 'warn'}\n"
-                f"changed_files: {len(radius.get('changed_files', []))}\n"
+                f"changed_files: {changed_count}\n"
                 f"test_files_in_radius: {len(test_files)}"
             ),
             tier=Tier.NORMAL,
