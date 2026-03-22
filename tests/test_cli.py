@@ -1,6 +1,8 @@
 """Tests for entrix.cli."""
 
-from entrix.cli import _domains_from_files, _metric_domains, build_parser
+import argparse
+
+from entrix.cli import _domains_from_files, _metric_domains, build_parser, cmd_analyze_long_file
 from entrix.engine import matches_changed_files
 from entrix.model import ExecutionScope, FitnessReport, Metric, MetricResult, ResultState, Tier
 from entrix.presets import get_project_preset
@@ -161,6 +163,67 @@ def test_parser_analyze_long_file_flags():
     assert args.min_lines == 80
     assert args.comment_review_commit_threshold == 9
     assert args.json is True
+
+
+def test_parser_analyze_long_file_positional_paths():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "analyze",
+            "long-file",
+            "src/a.ts",
+            "src/b.py",
+        ]
+    )
+    assert args.command == "analyze"
+    assert args.analyze_command == "long-file"
+    assert args.paths == ["src/a.ts", "src/b.py"]
+    assert args.files == []
+
+
+def test_parser_analyze_long_file_supports_positional_and_flagged_files():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "analyze",
+            "long-file",
+            "src/a.ts",
+            "--files",
+            "src/b.py",
+            "src/c.rs",
+        ]
+    )
+    assert args.paths == ["src/a.ts"]
+    assert args.files == ["src/b.py", "src/c.rs"]
+
+
+def test_cmd_analyze_long_file_merges_positional_and_flagged_files(monkeypatch):
+    captured = {}
+
+    monkeypatch.setattr("entrix.cli._find_project_root", lambda: ".")
+
+    def fake_analyze_long_files(*_args, **kwargs):
+        captured["files"] = kwargs["files"]
+        return {"status": "ok", "base": "HEAD", "files": []}
+
+    monkeypatch.setattr("entrix.cli.analyze_long_files", fake_analyze_long_files)
+    monkeypatch.setattr("entrix.cli._print_long_file_analysis", lambda *_args, **_kwargs: None)
+
+    args = argparse.Namespace(
+        files=["src/b.py", "src/a.ts"],
+        paths=["src/a.ts", "src/c.rs"],
+        config=None,
+        base="HEAD",
+        strict_limit=False,
+        comment_review_commit_threshold=5,
+        json=False,
+        min_lines=60,
+    )
+
+    exit_code = cmd_analyze_long_file(args)
+
+    assert exit_code == 0
+    assert captured["files"] == ["src/b.py", "src/a.ts", "src/c.rs"]
 
 
 def test_parser_graph_impact_defaults():

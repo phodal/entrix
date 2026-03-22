@@ -539,9 +539,10 @@ def cmd_hook_file_length(args: argparse.Namespace) -> int:
 def cmd_analyze_long_file(args: argparse.Namespace) -> int:
     """Analyze oversized or explicit files into ClassMap/FunctionMap payloads."""
     project_root = _find_project_root()
+    explicit_files = list(dict.fromkeys((args.files or []) + (args.paths or [])))
     result = analyze_long_files(
         project_root,
-        files=args.files or None,
+        files=explicit_files or None,
         config_path=Path(args.config).resolve() if args.config else None,
         base=args.base,
         use_head_ratchet=not args.strict_limit,
@@ -670,6 +671,11 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_long_file = analyze_subparsers.add_parser(
         "long-file",
         help="Return ClassMap/FunctionMap payloads for oversized or explicit files",
+    )
+    analyze_long_file.add_argument(
+        "paths",
+        nargs="*",
+        help="Explicit files to analyze",
     )
     analyze_long_file.add_argument("--files", nargs="*", default=[], help="Explicit files to analyze")
     analyze_long_file.add_argument("--base", default="HEAD", help="Git base reference for implicit oversized-file discovery")
