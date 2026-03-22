@@ -78,6 +78,10 @@ production issue / missed detection
     -> add stronger verification templates
 ```
 
+Additional design context:
+
+- `docs/adr/README.md`: Entrix architecture decisions and rationale
+
 ## What It Does
 
 Today the package provides:
