@@ -144,6 +144,16 @@ def _print_long_file_analysis(result: dict, *, min_lines: int = 60) -> None:
         )
         print(status_line)
         print(f"History: commits={item.get('commitCount', 0)}")
+        warnings = item.get("warnings", [])
+        if warnings:
+            print(f"Warnings: {len(warnings)}")
+            for warning in warnings:
+                print(
+                    "- review comments in "
+                    f"{warning['symbolKind']} {warning['name']} "
+                    f"({_format_line_span(warning)}) commits={warning['commitCount']} "
+                    f"comments={warning['commentCount']}"
+                )
 
         classes = sorted(
             item.get("classes", []),
@@ -535,6 +545,7 @@ def cmd_analyze_long_file(args: argparse.Namespace) -> int:
         config_path=Path(args.config).resolve() if args.config else None,
         base=args.base,
         use_head_ratchet=not args.strict_limit,
+        comment_review_commit_threshold=args.comment_review_commit_threshold,
     )
     if result.get("status") == "unavailable":
         print(result.get("summary", "Long-file analysis unavailable"))
@@ -676,6 +687,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=60,
         help="Hide text-report items smaller than this many lines (JSON output is unaffected).",
+    )
+    analyze_long_file.add_argument(
+        "--comment-review-commit-threshold",
+        type=int,
+        default=5,
+        help="Warn when a class/function has comments and changed in at least this many commits.",
     )
     analyze_long_file.add_argument("--json", action="store_true", help="Emit JSON output")
     analyze_long_file.set_defaults(func=cmd_analyze_long_file)

@@ -29,8 +29,11 @@ def _write_budget_config(path: Path, *, max_ts: int = 1000) -> None:
             {
                 "default_max_lines": 1000,
                 "include_roots": ["src", "apps", "crates"],
-                "extensions": [".ts", ".tsx", ".rs"],
+                "extensions": [".go", ".java", ".py", ".rs", ".ts", ".tsx"],
                 "extension_max_lines": {
+                    ".go": 1000,
+                    ".java": 1000,
+                    ".py": 1000,
                     ".ts": max_ts,
                     ".tsx": 1000,
                     ".rs": 800,
@@ -141,3 +144,117 @@ def test_analyze_long_file_includes_commit_count(monkeypatch, tmp_path: Path):
     result = analyze_long_files(tmp_path, files=["src/runner.ts"])
 
     assert result["files"][0]["commitCount"] == 7
+
+
+@pytest.mark.parametrize(
+    ("relative_path", "content", "selector"),
+    [
+        (
+            "src/service.ts",
+            "class Service {\n"
+            "  // review this behavior carefully\n"
+            "  run() {\n"
+            "    return helper();\n"
+            "  }\n"
+            "}\n"
+            "\n"
+            "function helper() {\n"
+            "  return 1;\n"
+            "}\n",
+            lambda analysis: analysis["classes"][0]["methods"][0],
+        ),
+        (
+            "src/lib.rs",
+            "// helper comment\n"
+            "fn helper() -> i32 {\n"
+            "    1\n"
+            "}\n",
+            lambda analysis: analysis["functions"][0],
+        ),
+        (
+            "src/main.go",
+            "package demo\n"
+            "\n"
+            "// helper comment\n"
+            "func Helper() int {\n"
+            "    return 1\n"
+            "}\n",
+            lambda analysis: analysis["functions"][0],
+        ),
+        (
+            "src/Runner.java",
+            "class Runner {\n"
+            "  // helper comment\n"
+            "  int run() {\n"
+            "    return helper();\n"
+            "  }\n"
+            "\n"
+            "  int helper() {\n"
+            "    return 1;\n"
+            "  }\n"
+            "}\n",
+            lambda analysis: analysis["classes"][0]["methods"][0],
+        ),
+        (
+            "src/service.py",
+            "# helper comment\n"
+            "def helper():\n"
+            "    return 1\n",
+            lambda analysis: analysis["functions"][0],
+        ),
+    ],
+)
+def test_analyze_long_file_warns_on_commented_high_churn_symbols(
+    monkeypatch,
+    tmp_path: Path,
+    relative_path: str,
+    content: str,
+    selector,
+):
+    _write_budget_config(tmp_path / "tools" / "entrix" / "file_budgets.json")
+    _write(tmp_path / relative_path, content)
+
+    monkeypatch.setattr(
+        "entrix.analysis.long_file._count_file_commits",
+        lambda repo_root, file_path: 3,
+    )
+    monkeypatch.setattr(
+        "entrix.analysis.long_file._count_symbol_commits",
+        lambda repo_root, file_path, start_line, end_line: 8,
+    )
+
+    result = analyze_long_files(tmp_path, files=[relative_path])
+
+    analysis = result["files"][0]
+    symbol = selector(analysis)
+    assert symbol["commentCount"] >= 1
+    assert symbol["commitCount"] == 8
+    assert symbol["warnings"][0]["code"] == "comment_review_required"
+    assert analysis["warnings"]
+
+
+def test_analyze_long_file_does_not_warn_below_threshold(monkeypatch, tmp_path: Path):
+    _write_budget_config(tmp_path / "tools" / "entrix" / "file_budgets.json")
+    _write(
+        tmp_path / "src" / "runner.ts",
+        "// helper comment\n"
+        "function helper() {\n"
+        "  return 1;\n"
+        "}\n",
+    )
+
+    monkeypatch.setattr(
+        "entrix.analysis.long_file._count_file_commits",
+        lambda repo_root, relative_path: 1,
+    )
+    monkeypatch.setattr(
+        "entrix.analysis.long_file._count_symbol_commits",
+        lambda repo_root, relative_path, start_line, end_line: 2,
+    )
+
+    result = analyze_long_files(tmp_path, files=["src/runner.ts"])
+
+    analysis = result["files"][0]
+    assert analysis["functions"][0]["commentCount"] == 1
+    assert analysis["functions"][0]["warnings"] == []
+    assert analysis["warnings"] == []

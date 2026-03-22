@@ -147,6 +147,8 @@ def test_parser_analyze_long_file_flags():
             "--strict-limit",
             "--min-lines",
             "80",
+            "--comment-review-commit-threshold",
+            "9",
             "--json",
         ]
     )
@@ -157,6 +159,7 @@ def test_parser_analyze_long_file_flags():
     assert args.config == "tools/entrix/file_budgets.json"
     assert args.strict_limit is True
     assert args.min_lines == 80
+    assert args.comment_review_commit_threshold == 9
     assert args.json is True
 
 

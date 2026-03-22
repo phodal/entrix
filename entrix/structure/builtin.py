@@ -53,6 +53,8 @@ _DEFAULT_IGNORE_PATTERNS = [
     "*.db-wal",
 ]
 _CODE_EXTENSIONS = {
+    ".go",
+    ".java",
     ".py",
     ".rs",
     ".ts",
@@ -61,6 +63,8 @@ _CODE_EXTENSIONS = {
     ".jsx",
 }
 _LANGUAGE_BY_SUFFIX = {
+    ".go": "go",
+    ".java": "java",
     ".py": "python",
     ".rs": "rust",
     ".ts": "typescript",
@@ -69,6 +73,8 @@ _LANGUAGE_BY_SUFFIX = {
     ".jsx": "javascript",
 }
 _CALL_NODE_TYPES = {
+    "go": {"call_expression"},
+    "java": {"method_invocation", "object_creation_expression"},
     "python": {"call"},
     "rust": {"call_expression", "macro_invocation"},
     "typescript": {"call_expression", "new_expression"},
@@ -76,6 +82,17 @@ _CALL_NODE_TYPES = {
     "javascript": {"call_expression", "new_expression"},
 }
 _SYMBOL_KINDS = {
+    "go": {
+        "type_spec": "Struct",
+        "function_declaration": "Function",
+        "method_declaration": "Function",
+    },
+    "java": {
+        "class_declaration": "Class",
+        "interface_declaration": "Interface",
+        "enum_declaration": "Enum",
+        "method_declaration": "Function",
+    },
     "python": {
         "class_definition": "Class",
         "function_definition": "Function",
@@ -406,6 +423,7 @@ class BuiltinGraphAdapter:
         is_test_file = classify_test_file(rel_path)
         imports: set[str] = set()
         symbols: list[dict[str, Any]] = []
+        comments: list[dict[str, Any]] = []
         test_nodes: list[dict[str, Any]] = []
         def visit(node, ancestors: list[Any]) -> None:
             node_type = node.type
@@ -413,6 +431,8 @@ class BuiltinGraphAdapter:
                 resolved = self._extract_import(rel_path, language, node, source)
                 if resolved:
                     imports.add(resolved)
+            if self._is_comment_node(node):
+                comments.append(self._extract_comment(node, source))
 
             kind = _SYMBOL_KINDS.get(language, {}).get(node_type)
             if kind:
@@ -451,6 +471,7 @@ class BuiltinGraphAdapter:
             "language": language,
             "is_test_file": is_test_file,
             "imports": sorted(imports),
+            "comments": comments,
             "symbols": ordered_symbols,
             "source_basename": self._normalized_source_basename(rel_path),
         }
@@ -675,6 +696,8 @@ class BuiltinGraphAdapter:
 
         text = self._node_text(node, source)
         parent_name = self._parent_symbol_name(language, ancestors, source)
+        if language == "go" and node.type == "method_declaration":
+            parent_name = self._go_receiver_type(node, source) or parent_name
         is_test = is_test_file or self._is_test_symbol(
             language,
             node,
@@ -1121,6 +1144,11 @@ class BuiltinGraphAdapter:
 
     def _symbol_kind(self, language: str, node, is_test: bool) -> str:
         base_kind = _SYMBOL_KINDS[language][node.type]
+        if language == "go" and node.type == "type_spec":
+            if self._first_child(node, {"interface_type"}):
+                base_kind = "Interface"
+            elif not self._first_child(node, {"struct_type"}):
+                base_kind = "Type"
         if is_test and base_kind == "Function":
             return "Test"
         return base_kind
@@ -1276,7 +1304,27 @@ class BuiltinGraphAdapter:
                 return text
         return ""
 
+    def _go_receiver_type(self, node, source: bytes) -> str:
+        receiver = self._first_child(node, {"parameter_list"})
+        if not receiver:
+            return ""
+        for identifier in self._descendants(receiver, {"type_identifier"}):
+            return self._node_text(identifier, source)
+        return ""
+
     def _symbol_name(self, language: str, node, source: bytes) -> str:
+        if language == "go":
+            if node.type == "method_declaration":
+                identifier = self._first_child(node, {"field_identifier", "identifier"})
+                return self._node_text(identifier, source) if identifier else ""
+            identifier = self._first_child(node, {"type_identifier", "identifier"})
+            return self._node_text(identifier, source) if identifier else ""
+        if language == "java":
+            identifier = self._first_child(
+                node,
+                {"identifier", "type_identifier"},
+            )
+            return self._node_text(identifier, source) if identifier else ""
         if language == "python":
             identifier = self._first_child(node, {"identifier"})
             return self._node_text(identifier, source) if identifier else ""
@@ -1302,6 +1350,18 @@ class BuiltinGraphAdapter:
         if node.type == "variable_declarator":
             return self._looks_like_arrow_function(node, source)
         return True
+
+    def _is_comment_node(self, node) -> bool:
+        return "comment" in node.type
+
+    def _extract_comment(self, node, source: bytes) -> dict[str, Any]:
+        text = self._node_text(node, source)
+        return {
+            "startLine": node.start_point[0] + 1,
+            "endLine": node.end_point[0] + 1,
+            "lineCount": node.end_point[0] - node.start_point[0] + 1,
+            "text": text,
+        }
 
     def _symbol_references(
         self,
