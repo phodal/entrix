@@ -87,11 +87,19 @@ Today the package provides:
 - change-aware execution against the current git diff
 - hard-gate and weighted-score orchestration
 - `review-trigger` rules that ask for human review on risky changes
+- graph-backed impact analysis, test radius estimation, and review context generation
+- structural analysis for oversized files (ClassMap / FunctionMap)
+- MCP server for AI agent integration
+- preset system for project-specific configuration
 
 It is useful both as:
 
 - a repository-local fitness runner for monorepos and application repos
 - the beginning of a more reusable fitness engine
+
+## Requirements
+
+- Python 3.10 or later
 
 ## Installation
 
@@ -113,6 +121,21 @@ uvx entrix review-trigger --base HEAD~1
 
 ```bash
 pip install entrix
+```
+
+### Optional dependencies
+
+Entrix ships optional dependency groups for extended features:
+
+```bash
+# Graph-backed impact analysis (code-review-graph)
+pip install entrix[graph]
+
+# MCP server for AI agent integration (fastmcp)
+pip install entrix[mcp]
+
+# Development tools (pytest, ruff)
+pip install entrix[dev]
 ```
 
 ### Run in a project without global install
@@ -179,6 +202,59 @@ metrics:
 # Code Quality
 
 Narrative evidence, rules, and ownership notes can live below the frontmatter.
+```
+
+### Advanced metric fields
+
+Beyond the basic fields shown above, each metric in the frontmatter supports additional options:
+
+```yaml
+metrics:
+  - name: api_contract
+    command: npm run test:contract 2>&1
+    hard_gate: false
+    tier: normal
+    description: API contract tests
+
+    # Execution scope — where this metric is authoritative
+    # Values: local, ci, staging, prod_observation
+    execution_scope: ci
+
+    # Timeout in seconds (null = no limit)
+    timeout_seconds: 120
+
+    # Gate severity: hard, soft, advisory
+    gate: soft
+
+    # Evidence type: command, test, probe, sarif, manual_attestation
+    evidence_type: test
+
+    # Confidence level: high, medium, low, unknown
+    confidence: high
+
+    # Signal stability: deterministic, noisy
+    stability: deterministic
+
+    # Fitness kind: atomic (single check) or holistic (system-wide)
+    kind: atomic
+
+    # Analysis mode: static (code structure) or dynamic (runtime)
+    analysis: dynamic
+
+    # Owner responsible for this metric
+    owner: team-platform
+
+    # Only run when these file patterns change
+    run_when_changed:
+      - "src/api/**"
+      - "openapi.yaml"
+
+    # Temporary waiver to bypass a failing metric
+    waiver:
+      reason: "Known flaky test, fix tracked in issue #42"
+      owner: team-platform
+      tracking_issue: 42
+      expires_at: "2025-06-01"
 ```
 
 ### 2. Run the checks
@@ -272,7 +348,13 @@ entrix run --parallel
 entrix run --dry-run
 entrix run --verbose
 entrix run --changed-only --base HEAD~1
+entrix run --files src/app.ts src/lib.ts
+entrix run --output report.json
+entrix run --output -              # JSON to stdout
+entrix run --min-score 90
 ```
+
+Use `--output` to write a JSON report to a file (or `-` for stdout), useful for CI artifact collection. Use `--files` to pass an explicit list of changed files for incremental metric selection.
 
 ### `entrix validate`
 
@@ -295,17 +377,150 @@ entrix review-trigger --fail-on-trigger
 entrix review-trigger --config docs/fitness/review-triggers.yaml
 ```
 
+### `entrix serve`
+
+Starts the MCP server for AI agent integration. Requires `pip install entrix[mcp]`.
+
+```bash
+entrix serve
+```
+
+See [MCP Server](#mcp-server-ai-agent-integration) for details.
+
+### `entrix analyze long-file`
+
+Structural analysis for oversized or explicit source files. Returns ClassMap / FunctionMap payloads showing classes, methods, and standalone functions with line spans.
+
+Supported languages: Python, Rust, TypeScript, JavaScript.
+
+```bash
+entrix analyze long-file --files src/app.ts src/lib.ts
+entrix analyze long-file --json
+entrix analyze long-file --config file_budgets.json --strict-limit
+entrix analyze long-file --min-lines 100
+```
+
+When no `--files` are given, the command auto-discovers files that exceed their configured line budget.
+
 ### `entrix graph ...`
 
-Graph-backed commands support impact analysis, test radius, and AI-friendly review context.
+Graph-backed commands support building the code graph, querying relationships, impact analysis, test radius estimation, commit history analysis, and AI-friendly review context generation.
 
-Examples:
+Requires the optional graph dependency: `pip install entrix[graph]`.
+
+#### `entrix graph build`
+
+Build or update the code graph.
+
+```bash
+entrix graph build --base HEAD~1
+entrix graph build --build-mode full --json
+```
+
+#### `entrix graph stats`
+
+Show graph statistics (node and edge counts).
+
+```bash
+entrix graph stats
+entrix graph stats --json
+```
+
+#### `entrix graph impact`
+
+Analyze the blast radius of changed files.
 
 ```bash
 entrix graph impact --base HEAD~1
-entrix graph test-radius --base HEAD~1
-entrix graph review-context --base HEAD~1 --json
+entrix graph impact --base HEAD~1 --depth 3 --json
 ```
+
+#### `entrix graph test-radius`
+
+Estimate which tests are affected by changed files.
+
+```bash
+entrix graph test-radius --base HEAD~1
+entrix graph test-radius --base HEAD~1 --max-targets 50 --json
+```
+
+#### `entrix graph query`
+
+Run a structural query against the code graph.
+
+Available patterns: `callers_of`, `callees_of`, `imports_of`, `importers_of`, `children_of`, `tests_for`, `inheritors_of`, `file_summary`.
+
+```bash
+entrix graph query callers_of "mymodule.MyClass.my_method"
+entrix graph query tests_for "src/core/engine.py" --json
+```
+
+#### `entrix graph history`
+
+Estimate test radius for recent commits using the current graph.
+
+```bash
+entrix graph history --count 20 --ref main
+entrix graph history --json
+```
+
+#### `entrix graph review-context`
+
+Build an AI-friendly review context from the current graph.
+
+```bash
+entrix graph review-context --base HEAD~1 --json
+entrix graph review-context --base HEAD~1 --max-files 20 --no-source
+entrix graph review-context --base HEAD~1 --output context.json
+```
+
+## MCP Server (AI Agent Integration)
+
+Entrix can run as an MCP (Model Context Protocol) server, exposing fitness functions as tools for AI agents.
+
+Install the optional dependency:
+
+```bash
+pip install entrix[mcp]
+```
+
+Start the server:
+
+```bash
+entrix serve
+```
+
+The server exposes three tools over stdio transport:
+
+- `run_fitness` — run fitness checks and return a structured report (supports `tier`, `scope`, `parallel`, `dry_run`, `min_score` parameters)
+- `get_dimension_status` — get the current status of a specific fitness dimension by name
+- `analyze_change_impact` — analyze the blast radius of changes using the code graph
+
+Example MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "entrix": {
+      "command": "entrix",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+## Preset System
+
+Entrix uses a preset system to adapt behavior to different project layouts. The default `ProjectPreset` looks for fitness specs in `docs/fitness/` and review triggers in `docs/fitness/review-triggers.yaml`.
+
+Custom presets can override:
+
+- `fitness_dir(project_root)` — where to find fitness spec files
+- `review_trigger_config(project_root)` — path to the review trigger YAML
+- `should_ignore_changed_file(file_path)` — filter out irrelevant changed files
+- `domains_from_files(files)` — extract domain tags from changed file paths
+
+A built-in `RoutaPreset` is included as a reference implementation for monorepo layouts.
 
 ## AI-Friendly Authoring Notes
 
@@ -423,9 +638,12 @@ A copy-pasteable template lives in [`examples/file-length-hook/`](examples/file-
 Current constraints to be aware of:
 
 - the package name on PyPI is `entrix`
+- requires Python 3.10 or later
 - the default authoring format is still markdown frontmatter under `docs/fitness`
 - the project is evolving toward a cleaner core / adapter / preset split
-- graph commands require the optional graph dependency set
+- graph commands require the optional graph dependency: `pip install entrix[graph]`
+- MCP server requires the optional mcp dependency: `pip install entrix[mcp]`
+- `analyze long-file` structural analysis supports Python, Rust, TypeScript, and JavaScript
 
 ## Status
 
@@ -435,3 +653,11 @@ Current status:
 - installable as a standalone PyPI package
 - suitable for AI-assisted project configuration
 - evolving toward a reusable fitness engine architecture
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and contribution workflow.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
