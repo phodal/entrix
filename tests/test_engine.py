@@ -68,6 +68,31 @@ class FakeGraphRunner:
         )
 
 
+class FakeSarifRunner:
+    def __init__(self, _project_root: Path, env_overrides: dict[str, str] | None = None) -> None:
+        self.env_overrides = env_overrides or {}
+        self.calls: list[str] = []
+
+    def run_batch(
+        self,
+        metrics: list[Metric],
+        *,
+        dry_run: bool = False,
+    ) -> list[MetricResult]:
+        del dry_run
+        self.calls.extend(metric.name for metric in metrics)
+        return [
+            MetricResult(
+                metric_name=metric.name,
+                passed=False,
+                output=f"sarif:{metric.command}",
+                tier=metric.tier,
+                state=ResultState.FAIL,
+            )
+            for metric in metrics
+        ]
+
+
 def test_run_fitness_report_dispatches_probe_metrics(monkeypatch, tmp_path: Path):
     graph_runner = FakeGraphRunner(tmp_path)
     monkeypatch.setattr(
@@ -85,6 +110,7 @@ def test_run_fitness_report_dispatches_probe_metrics(monkeypatch, tmp_path: Path
         ],
     )
     monkeypatch.setattr(engine_module, "ShellRunner", FakeShellRunner)
+    monkeypatch.setattr(engine_module, "SarifRunner", FakeSarifRunner)
     monkeypatch.setattr(engine_module, "GraphRunner", lambda _project_root: graph_runner)
 
     report, dimensions = engine_module.run_fitness_report(
@@ -116,6 +142,7 @@ def test_run_fitness_report_excludes_skipped_probe_from_score(monkeypatch, tmp_p
         ],
     )
     monkeypatch.setattr(engine_module, "ShellRunner", FakeShellRunner)
+    monkeypatch.setattr(engine_module, "SarifRunner", FakeSarifRunner)
     monkeypatch.setattr(engine_module, "GraphRunner", FakeGraphRunner)
 
     report, _ = engine_module.run_fitness_report(
@@ -146,6 +173,7 @@ def test_run_fitness_report_filters_dimensions_from_policy(monkeypatch, tmp_path
         ],
     )
     monkeypatch.setattr(engine_module, "ShellRunner", FakeShellRunner)
+    monkeypatch.setattr(engine_module, "SarifRunner", FakeSarifRunner)
     monkeypatch.setattr(engine_module, "GraphRunner", FakeGraphRunner)
 
     report, dimensions = engine_module.run_fitness_report(
@@ -156,3 +184,34 @@ def test_run_fitness_report_filters_dimensions_from_policy(monkeypatch, tmp_path
 
     assert [dimension.name for dimension in dimensions] == ["security"]
     assert [dimension.dimension for dimension in report.dimensions] == ["security"]
+
+
+def test_run_fitness_report_dispatches_sarif_metrics(monkeypatch, tmp_path: Path):
+    sarif_runner = FakeSarifRunner(tmp_path)
+    monkeypatch.setattr(
+        engine_module,
+        "load_dimensions",
+        lambda _fitness_dir: [
+            Dimension(
+                name="security",
+                weight=100,
+                metrics=[
+                    Metric(name="semgrep_sarif", command="reports/semgrep.sarif", evidence_type=EvidenceType.SARIF),
+                    Metric(name="lint", command="npm run lint"),
+                ],
+            )
+        ],
+    )
+    monkeypatch.setattr(engine_module, "ShellRunner", FakeShellRunner)
+    monkeypatch.setattr(engine_module, "SarifRunner", lambda _project_root, **kwargs: sarif_runner)
+    monkeypatch.setattr(engine_module, "GraphRunner", FakeGraphRunner)
+
+    report, _ = engine_module.run_fitness_report(
+        tmp_path,
+        GovernancePolicy(),
+        get_project_preset(),
+    )
+
+    assert sarif_runner.calls == ["semgrep_sarif"]
+    assert report.dimensions[0].results[0].output == "sarif:reports/semgrep.sarif"
+    assert report.dimensions[0].results[1].output == "shell:npm run lint"

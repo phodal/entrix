@@ -11,6 +11,7 @@ from entrix.loaders import load_dimensions
 from entrix.model import Dimension, EvidenceType, FitnessReport, Gate, Metric, MetricResult, ResultState
 from entrix.presets.base import ProjectPreset
 from entrix.runners.graph import GraphRunner
+from entrix.runners.sarif import SarifRunner
 from entrix.runners.shell import ShellRunner
 from entrix.scoring import score_dimension, score_report
 
@@ -130,12 +131,14 @@ def run_fitness_report(
         }
 
     shell_runner = ShellRunner(project_root, env_overrides=runner_env)
+    sarif_runner = SarifRunner(project_root, env_overrides=runner_env)
     graph_runner = GraphRunner(project_root)
     dimension_scores = []
     for dim in dimensions:
         results = _run_metric_batch(
             dim.metrics,
             shell_runner=shell_runner,
+            sarif_runner=sarif_runner,
             graph_runner=graph_runner,
             dry_run=policy.dry_run,
             parallel=policy.parallel,
@@ -151,6 +154,7 @@ def _run_metric_batch(
     metrics: list[Metric],
     *,
     shell_runner: ShellRunner,
+    sarif_runner: SarifRunner,
     graph_runner: GraphRunner,
     dry_run: bool,
     parallel: bool,
@@ -161,6 +165,8 @@ def _run_metric_batch(
     results: list[MetricResult] = []
     shell_batch: list[Metric] = []
     shell_indexes: list[int] = []
+    sarif_batch: list[Metric] = []
+    sarif_indexes: list[int] = []
 
     for index, metric in enumerate(metrics):
         if metric.evidence_type == EvidenceType.PROBE:
@@ -173,6 +179,20 @@ def _run_metric_batch(
                     base=base,
                 )
             )
+            continue
+        if metric.evidence_type == EvidenceType.SARIF:
+            results.append(
+                MetricResult(
+                    metric_name=metric.name,
+                    passed=False,
+                    output="",
+                    tier=metric.tier,
+                    hard_gate=metric.gate == Gate.HARD,
+                    state=ResultState.UNKNOWN,
+                )
+            )
+            sarif_batch.append(metric)
+            sarif_indexes.append(index)
             continue
 
         results.append(
@@ -195,6 +215,14 @@ def _run_metric_batch(
             dry_run=dry_run,
         )
         for index, result in zip(shell_indexes, shell_results, strict=False):
+            results[index] = result
+
+    if sarif_batch:
+        sarif_results = sarif_runner.run_batch(
+            sarif_batch,
+            dry_run=dry_run,
+        )
+        for index, result in zip(sarif_indexes, sarif_results, strict=False):
             results[index] = result
 
     return results
