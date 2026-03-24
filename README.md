@@ -1,5 +1,9 @@
 # Entrix
 
+[![PyPI version](https://img.shields.io/pypi/v/entrix.svg)](https://pypi.org/project/entrix/)
+[![Python versions](https://img.shields.io/pypi/pyversions/entrix.svg)](https://pypi.org/project/entrix/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Guardrails Embedded in the Change Lifecycle**
 
 Entrix is a Harness Engineering tool for turning quality rules, architecture
