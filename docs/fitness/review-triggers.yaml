@@ -19,6 +19,28 @@ review_triggers:
     severity: medium
     action: require_human_review
 
+  - name: sensitive_release_files
+    type: sensitive_file_change
+    paths:
+      - pyproject.toml
+      - entrix/model.py
+      - entrix/review_trigger.py
+    severity: high
+    action: require_human_review
+
+  - name: cross_boundary_engine_test_docs_change
+    type: cross_boundary_change
+    boundaries:
+      engine:
+        - entrix/**
+      tests:
+        - tests/**
+      docs:
+        - docs/**
+    min_boundaries: 2
+    severity: medium
+    action: require_human_review
+
   - name: oversized_change
     type: diff_size
     max_files: 10

@@ -31,6 +31,9 @@ class ReviewTriggerRule:
     max_files: int | None = None
     max_added_lines: int | None = None
     max_deleted_lines: int | None = None
+    evidence_paths: tuple[str, ...] = ()
+    boundaries: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    min_boundaries: int = 2
 
 
 @dataclass(frozen=True)
@@ -74,6 +77,12 @@ def load_review_triggers(config_path: Path) -> list[ReviewTriggerRule]:
     raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     rules: list[ReviewTriggerRule] = []
     for entry in raw.get("review_triggers", []):
+        raw_boundaries = entry.get("boundaries", {}) or {}
+        boundaries: tuple[tuple[str, tuple[str, ...]], ...] = tuple(
+            (name, tuple(patterns or ()))
+            for name, patterns in raw_boundaries.items()
+            if isinstance(name, str)
+        )
         rules.append(
             ReviewTriggerRule(
                 name=entry.get("name", "unknown"),
@@ -84,6 +93,9 @@ def load_review_triggers(config_path: Path) -> list[ReviewTriggerRule]:
                 max_files=entry.get("max_files"),
                 max_added_lines=entry.get("max_added_lines"),
                 max_deleted_lines=entry.get("max_deleted_lines"),
+                evidence_paths=tuple(entry.get("evidence_paths", [])),
+                boundaries=boundaries,
+                min_boundaries=int(entry.get("min_boundaries", 2)),
             )
         )
     return rules
@@ -166,6 +178,21 @@ def evaluate_review_triggers(
                         reasons=reasons,
                     )
                 )
+        elif rule.type == "sensitive_file_change":
+            reasons = tuple(
+                f"sensitive file changed: {file_path}"
+                for file_path in changed_files
+                if any(fnmatch.fnmatch(file_path, pattern) for pattern in rule.paths)
+            )
+            if reasons:
+                triggers.append(
+                    TriggerMatch(
+                        name=rule.name,
+                        severity=rule.severity,
+                        action=rule.action,
+                        reasons=reasons,
+                    )
+                )
         elif rule.type == "diff_size":
             reasons: list[str] = []
             if rule.max_files is not None and diff_stats.file_count > rule.max_files:
@@ -196,6 +223,55 @@ def evaluate_review_triggers(
                         reasons=tuple(reasons),
                     )
                 )
+        elif rule.type == "evidence_gap":
+            monitored_changes = [
+                file_path
+                for file_path in changed_files
+                if any(fnmatch.fnmatch(file_path, pattern) for pattern in rule.paths)
+            ]
+            if not monitored_changes:
+                continue
+            evidence_touched = any(
+                fnmatch.fnmatch(file_path, pattern)
+                for file_path in changed_files
+                for pattern in rule.evidence_paths
+            )
+            if not evidence_touched:
+                reasons = tuple(
+                    [f"changed code path without evidence update: {path}" for path in monitored_changes]
+                    + [f"expected evidence path patterns: {', '.join(rule.evidence_paths)}"]
+                )
+                triggers.append(
+                    TriggerMatch(
+                        name=rule.name,
+                        severity=rule.severity,
+                        action=rule.action,
+                        reasons=reasons,
+                    )
+                )
+        elif rule.type == "cross_boundary_change":
+            boundary_hits: dict[str, list[str]] = {}
+            for boundary_name, patterns in rule.boundaries:
+                matches = [
+                    file_path
+                    for file_path in changed_files
+                    if any(fnmatch.fnmatch(file_path, pattern) for pattern in patterns)
+                ]
+                if matches:
+                    boundary_hits[boundary_name] = matches
+            if len(boundary_hits) >= rule.min_boundaries:
+                reasons = tuple(
+                    f"changed boundary '{boundary_name}': {', '.join(paths)}"
+                    for boundary_name, paths in boundary_hits.items()
+                )
+                triggers.append(
+                    TriggerMatch(
+                        name=rule.name,
+                        severity=rule.severity,
+                        action=rule.action,
+                        reasons=reasons,
+                    )
+                )
 
     return ReviewTriggerReport(
         human_review_required=bool(triggers),
@@ -204,4 +280,3 @@ def evaluate_review_triggers(
         diff_stats=diff_stats,
         triggers=tuple(triggers),
     )
-
