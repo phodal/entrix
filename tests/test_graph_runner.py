@@ -312,3 +312,72 @@ def test_probe_test_coverage_skips_when_no_changed_files(monkeypatch, tmp_path: 
         "changed_files: 0\n"
         "test_files_in_radius: 0"
     )
+
+
+def test_analyze_test_radius_returns_unavailable_when_build_fails(monkeypatch, tmp_path: Path):
+    class ExplodingAdapter(FakeAdapter):
+        def build_or_update(self, *, full: bool = False, base: str = "HEAD~1") -> dict:
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(graph_module, "try_create_adapter", lambda _: ExplodingAdapter())
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "service.ts").write_text("export function run() {}\n", encoding="utf-8")
+
+    runner = GraphRunner(tmp_path)
+    result = runner.analyze_test_radius(["src/service.ts"])
+
+    assert result["status"] == "unavailable"
+    assert "graph build failed" in result["reason"]
+    assert "RuntimeError" in result["reason"]
+
+
+def test_analyze_test_radius_tolerates_invalid_impact_payloads(monkeypatch, tmp_path: Path):
+    class InvalidImpactAdapter(FakeAdapter):
+        def impact_radius(self, files: list[str], *, depth: int = 2) -> dict:
+            self.impact_calls.append({"files": files, "depth": depth})
+            return {
+                "status": "ok",
+                "summary": "impact ok",
+                "changed_nodes": None,
+                "impacted_nodes": None,
+                "impacted_files": None,
+                "edges": None,
+            }
+
+    monkeypatch.setattr(graph_module, "try_create_adapter", lambda _: InvalidImpactAdapter())
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "service.ts").write_text("export function run() {}\n", encoding="utf-8")
+
+    runner = GraphRunner(tmp_path)
+    result = runner.analyze_test_radius(["src/service.ts"], build_mode="skip")
+
+    assert result["status"] == "ok"
+    assert result["changed_nodes"] == []
+    assert result["impacted_nodes"] == []
+    assert result["impacted_files"] == []
+    assert result["test_files"] == []
+    assert result["target_nodes"] == []
+    assert (
+        result["summary"]
+        == "Estimated test radius for 1 changed file(s): no queryable changed nodes found."
+    )
+
+
+def test_analyze_test_radius_records_query_failures_without_crashing(monkeypatch, tmp_path: Path):
+    class QueryExplodingAdapter(FakeAdapter):
+        def query(self, query_type: str, target: str) -> dict:
+            self.query_calls.append({"query_type": query_type, "target": target})
+            raise RuntimeError("query blew up")
+
+    monkeypatch.setattr(graph_module, "try_create_adapter", lambda _: QueryExplodingAdapter())
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "service.ts").write_text("export function run() {}\n", encoding="utf-8")
+
+    runner = GraphRunner(tmp_path)
+    result = runner.analyze_test_radius(["src/service.ts"], build_mode="skip")
+
+    assert result["status"] == "ok"
+    assert len(result["query_failures"]) == 2
+    assert result["query_failures"][0]["status"] == "error"
+    assert "RuntimeError" in result["query_failures"][0]["summary"]
+    assert result["test_files"] == ["src/service.test.ts"]

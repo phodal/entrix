@@ -33,8 +33,11 @@ class GraphRunner:
     def available(self) -> bool:
         return self._adapter is not None
 
-    def _unavailable_result(self) -> dict[str, Any]:
-        return {"status": "unavailable", "reason": "graph backend unavailable"}
+    def _unavailable_result(self, *, reason: str = "graph backend unavailable") -> dict[str, Any]:
+        return {"status": "unavailable", "reason": reason}
+
+    def _adapter_failure_result(self, action: str, exc: Exception) -> dict[str, Any]:
+        return self._unavailable_result(reason=f"{action} failed: {type(exc).__name__}: {exc}")
 
     def _has_graph_cache(self) -> bool:
         return any(
@@ -55,13 +58,19 @@ class GraphRunner:
             return {"status": "skipped", "summary": "Graph build skipped."}
 
         full = build_mode == "full" or (build_mode == "auto" and not self._has_graph_cache())
-        return self._adapter.build_or_update(full=full, base=base)
+        try:
+            return self._adapter.build_or_update(full=full, base=base)
+        except Exception as exc:  # pragma: no cover - exercised via runner tests
+            return self._adapter_failure_result("graph build", exc)
 
     def stats(self) -> dict[str, Any]:
         """Return graph statistics if the backend is available."""
         if not self.available:
             return self._unavailable_result()
-        stats = self._adapter.stats()
+        try:
+            stats = self._adapter.stats()
+        except Exception as exc:  # pragma: no cover - exercised via runner tests
+            return self._adapter_failure_result("graph stats", exc)
         if "status" not in stats:
             stats["status"] = "ok"
         return stats
@@ -82,7 +91,12 @@ class GraphRunner:
         if build.get("status") == "unavailable":
             return build
 
-        result = self._adapter.query(query_type, target)
+        try:
+            result = self._adapter.query(query_type, target)
+        except Exception as exc:  # pragma: no cover - exercised via runner tests
+            return self._adapter_failure_result(f"graph query {query_type}", exc)
+        if not isinstance(result, dict):
+            return self._unavailable_result(reason=f"graph query {query_type} returned invalid payload")
         result.setdefault("status", "ok")
         result["build"] = build
         return result
@@ -126,8 +140,13 @@ class GraphRunner:
         if build.get("status") == "unavailable":
             return build
 
-        impact = self._adapter.impact_radius(changed, depth=max_depth)
-        impacted_files = impact.get("impacted_files", [])
+        try:
+            impact = self._adapter.impact_radius(changed, depth=max_depth)
+        except Exception as exc:  # pragma: no cover - exercised via runner tests
+            return self._adapter_failure_result("graph impact analysis", exc)
+        if not isinstance(impact, dict):
+            return self._unavailable_result(reason="graph impact analysis returned invalid payload")
+        impacted_files = self._string_list(impact.get("impacted_files", []))
         impacted_test_files = sorted(
             {path for path in impacted_files if isinstance(path, str) and classify_test_file(path)}
         )
@@ -139,18 +158,18 @@ class GraphRunner:
                 "summary",
                 (
                     f"Blast radius for {len(changed)} changed file(s): "
-                    f"{len(impact.get('changed_nodes', []))} changed nodes, "
-                    f"{len(impact.get('impacted_nodes', []))} impacted nodes."
+                    f"{len(self._dict_list(impact.get('changed_nodes', [])))} changed nodes, "
+                    f"{len(self._dict_list(impact.get('impacted_nodes', [])))} impacted nodes."
                 ),
             ),
             "base": base,
             "changed_files": changed,
             "skipped_files": skipped,
-            "changed_nodes": impact.get("changed_nodes", []),
-            "impacted_nodes": impact.get("impacted_nodes", []),
+            "changed_nodes": self._dict_list(impact.get("changed_nodes", [])),
+            "impacted_nodes": self._dict_list(impact.get("impacted_nodes", [])),
             "impacted_files": impacted_files,
             "impacted_test_files": impacted_test_files,
-            "edges": impact.get("edges", []),
+            "edges": self._dict_list(impact.get("edges", [])),
             "wide_blast_radius": wide,
             "build": build,
         }
@@ -174,14 +193,45 @@ class GraphRunner:
         if impact.get("status") != "ok":
             return impact
 
-        target_nodes = self._select_query_targets(impact.get("changed_nodes", []), max_targets=max_targets)
+        changed_nodes = self._dict_list(impact.get("changed_nodes", []))
+        impacted_nodes = self._dict_list(impact.get("impacted_nodes", []))
+        impacted_files = self._string_list(impact.get("impacted_files", []))
+        impacted_test_files = self._string_list(impact.get("impacted_test_files", []))
+        edges = self._dict_list(impact.get("edges", []))
+        changed_files_in_radius = self._string_list(impact.get("changed_files", []))
+        skipped_files = self._string_list(impact.get("skipped_files", []))
+
+        target_nodes = self._select_query_targets(changed_nodes, max_targets=max_targets)
         all_tests: dict[str, dict[str, Any]] = {}
-        all_test_files = set(impact.get("impacted_test_files", []))
+        all_test_files = set(impacted_test_files)
         query_failures: list[dict[str, str]] = []
         targets_with_tests = 0
 
         for target in target_nodes:
-            query = self._adapter.query("tests_for", target["qualified_name"])
+            try:
+                query = self._adapter.query("tests_for", target["qualified_name"])
+            except Exception as exc:
+                query_failures.append(
+                    {
+                        "qualified_name": target["qualified_name"],
+                        "status": "error",
+                        "summary": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+                target["tests"] = []
+                target["tests_count"] = 0
+                continue
+            if not isinstance(query, dict):
+                query_failures.append(
+                    {
+                        "qualified_name": target["qualified_name"],
+                        "status": "error",
+                        "summary": "invalid graph query payload",
+                    }
+                )
+                target["tests"] = []
+                target["tests_count"] = 0
+                continue
             status = query.get("status", "ok")
             if status != "ok":
                 query_failures.append(
@@ -192,9 +242,10 @@ class GraphRunner:
                     }
                 )
                 target["tests"] = []
+                target["tests_count"] = 0
                 continue
 
-            tests = query.get("results", [])
+            tests = self._dict_list(query.get("results", []))
             deduped_tests = []
             seen = set()
             for test in tests:
@@ -215,7 +266,7 @@ class GraphRunner:
 
         inherited_targets = self._propagate_local_test_coverage(
             target_nodes,
-            impact.get("edges", []),
+            edges,
         )
         inherited_targets_with_tests = 0
         for target in target_nodes:
@@ -244,7 +295,7 @@ class GraphRunner:
         ]
 
         summary = (
-            f"Estimated test radius for {len(impact['changed_files'])} changed file(s): "
+            f"Estimated test radius for {len(changed_files_in_radius)} changed file(s): "
             f"{len(target_nodes)} queryable target(s), "
             f"{targets_with_tests} with explicit tests, "
             f"{len(all_test_files)} unique test file(s)."
@@ -253,7 +304,7 @@ class GraphRunner:
             summary = summary[:-1] + f", {inherited_targets_with_tests} with inherited coverage."
         if not target_nodes:
             summary = (
-                f"Estimated test radius for {len(impact['changed_files'])} changed file(s): "
+                f"Estimated test radius for {len(changed_files_in_radius)} changed file(s): "
                 "no queryable changed nodes found."
             )
 
@@ -262,12 +313,12 @@ class GraphRunner:
             "analysis_mode": "current_graph",
             "summary": summary,
             "base": base,
-            "changed_files": impact["changed_files"],
-            "skipped_files": impact["skipped_files"],
-            "changed_nodes": impact["changed_nodes"],
-            "impacted_nodes": impact["impacted_nodes"],
-            "impacted_files": impact["impacted_files"],
-            "impacted_test_files": impact["impacted_test_files"],
+            "changed_files": changed_files_in_radius,
+            "skipped_files": skipped_files,
+            "changed_nodes": changed_nodes,
+            "impacted_nodes": impacted_nodes,
+            "impacted_files": impacted_files,
+            "impacted_test_files": impacted_test_files,
             "target_nodes": target_nodes,
             "query_failures": query_failures,
             "tests": sorted(
@@ -668,6 +719,16 @@ class GraphRunner:
                 break
 
         return targets
+
+    def _dict_list(self, value: Any) -> list[dict[str, Any]]:
+        if not isinstance(value, list):
+            return []
+        return [item for item in value if isinstance(item, dict)]
+
+    def _string_list(self, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [item for item in value if isinstance(item, str) and item]
 
     def _is_nested_local_target(
         self,
