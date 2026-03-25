@@ -1526,7 +1526,7 @@ class BuiltinGraphAdapter:
 
         for path in candidates:
             relative = self._repo_relative_path(path)
-            if relative and path.exists() and path.is_file():
+            if relative and self._path_is_file(path):
                 return relative
         return None
 
@@ -1539,7 +1539,7 @@ class BuiltinGraphAdapter:
         candidate = (anchor / relative_part).resolve() if relative_part else anchor.resolve()
         for path in [candidate.with_suffix(".py"), candidate / "__init__.py"]:
             relative = self._repo_relative_path(path)
-            if relative and path.exists() and path.is_file():
+            if relative and self._path_is_file(path):
                 return relative
         return None
 
@@ -1547,37 +1547,66 @@ class BuiltinGraphAdapter:
         path_text = import_text.removeprefix("use").strip().rstrip(";")
         if "::" not in path_text:
             return None
-        parts = [
-            part
-            for part in path_text.split("::")
-            if part and part not in {"crate", "self", "super"}
-        ]
-        if not parts:
-            return None
 
         crate_root = self._rust_crate_root(rel_path)
         if not crate_root:
             return None
 
+        parts = self._rust_import_parts(path_text)
+        if not parts:
+            return None
+
         current_dir = (self.repo_root / rel_path).parent
         anchors = []
-        if path_text.startswith("crate::"):
+        compact_path = re.sub(r"\s+", "", path_text)
+        if compact_path.startswith("crate::"):
             anchors.append(crate_root)
-        elif path_text.startswith("super::"):
+        elif compact_path.startswith("super::"):
             anchors.append(current_dir.parent)
-        elif path_text.startswith("self::"):
+        elif compact_path.startswith("self::"):
             anchors.append(current_dir)
         else:
             anchors.append(crate_root)
 
         module_parts = parts[:-1] or parts
         for anchor in anchors:
-            module_base = anchor.joinpath(*module_parts)
-            for path in [module_base.with_suffix(".rs"), module_base / "mod.rs"]:
+            for path in self._rust_module_candidate_paths(anchor, module_parts, crate_root):
                 relative = self._repo_relative_path(path)
-                if relative and path.exists() and path.is_file():
+                if relative and self._path_is_file(path):
                     return relative
         return None
+
+    def _rust_import_parts(self, path_text: str) -> list[str]:
+        normalized = re.sub(r"\s+", " ", path_text).strip()
+        if "{" in normalized:
+            normalized = normalized.split("{", 1)[0].rstrip().removesuffix("::").strip()
+        else:
+            normalized = re.sub(r"\s+as\s+[_A-Za-z][_A-Za-z0-9]*$", "", normalized)
+            normalized = normalized.removesuffix("::*")
+        return [
+            part
+            for part in (segment.strip() for segment in normalized.split("::"))
+            if part and part not in {"crate", "self", "super"}
+        ]
+
+    def _rust_module_candidate_paths(
+        self,
+        anchor: Path,
+        module_parts: list[str],
+        crate_root: Path,
+    ) -> list[Path]:
+        if module_parts:
+            module_base = anchor.joinpath(*module_parts)
+            return [module_base.with_suffix(".rs"), module_base / "mod.rs"]
+        if anchor == crate_root:
+            return [crate_root / "lib.rs", crate_root / "main.rs"]
+        return [anchor.with_suffix(".rs"), anchor / "mod.rs"]
+
+    def _path_is_file(self, path: Path) -> bool:
+        try:
+            return path.exists() and path.is_file()
+        except OSError:
+            return False
 
     def _repo_relative_path(self, path: Path) -> str | None:
         candidates = [self.repo_root, self.repo_root.resolve()]

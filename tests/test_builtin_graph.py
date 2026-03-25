@@ -142,6 +142,52 @@ def test_builtin_graph_qualifies_rust_impl_methods(tmp_path: Path):
     ]
 
 
+def test_builtin_graph_resolves_multiline_grouped_rust_imports(tmp_path: Path):
+    _write(
+        tmp_path / "crates" / "demo" / "src" / "lib.rs",
+        "mod commands;\nmod agent;\n",
+    )
+    _write(
+        tmp_path / "crates" / "demo" / "src" / "commands" / "mod.rs",
+        "pub fn execution_budget() -> u64 { 240 }\npub fn output_contains_artifact_payload() -> bool { true }\n",
+    )
+    _write(
+        tmp_path / "crates" / "demo" / "src" / "agent.rs",
+        "use crate::commands::{\n    execution_budget,\n    output_contains_artifact_payload,\n};\n\npub fn run() -> bool {\n    execution_budget() > 0 && output_contains_artifact_payload()\n}\n",
+    )
+
+    adapter = BuiltinGraphAdapter(tmp_path)
+    build = adapter.build_or_update(full=True)
+    imports = adapter.query("imports_of", "crates/demo/src/agent.rs")
+
+    assert build["status"] == "ok"
+    assert [item["qualified_name"] for item in imports["results"]] == [
+        "crates/demo/src/commands/mod.rs"
+    ]
+
+
+def test_builtin_graph_handles_ci_style_grouped_rust_import_text(tmp_path: Path):
+    _write(tmp_path / "crates" / "demo" / "src" / "lib.rs", "mod commands;\n")
+    _write(
+        tmp_path / "crates" / "demo" / "src" / "commands" / "mod.rs",
+        "pub fn execution_budget() {}\npub fn output_contains_artifact_payload() {}\n",
+    )
+
+    adapter = BuiltinGraphAdapter(tmp_path)
+    resolved = adapter._resolve_rust_import(
+        "crates/demo/src/lib.rs",
+        """use crate::commands::{
+        execution_budget, output_contains_artifact_payload, parse_prompt,
+        recover_success_artifacts_from_output, validate_prompt, validate_success_artifacts,
+        write_artifact_set, write_baseline_artifacts, UiJourneyAggregateRun, UiJourneyPromptParams,
+        UiJourneyRunContext, UiJourneyRunMetrics, DEFAULT_ARTIFACT_DIR, DEFAULT_BASE_URL,
+        DEFAULT_SCENARIO_ID,
+    };""",
+    )
+
+    assert resolved == "crates/demo/src/commands/mod.rs"
+
+
 def test_builtin_graph_qualifies_typescript_class_methods(tmp_path: Path):
     _write(
         tmp_path / "src" / "runner.ts",
