@@ -84,7 +84,7 @@ production issue / missed detection
 
 Additional design context:
 
-- `docs/adr/README.md`: Entrix architecture decisions and rationale
+- `tools/entrix/docs/adr/README.md`: Entrix architecture decisions and rationale
 
 ## What It Does
 
@@ -97,7 +97,6 @@ Today the package provides:
 - `review-trigger` rules that ask for human review on risky changes
 - graph-backed impact analysis, test radius estimation, and review context generation
 - structural analysis for oversized files (ClassMap / FunctionMap)
-- MCP server for AI agent integration
 - preset system for project-specific configuration
 
 It is useful both as:
@@ -152,6 +151,24 @@ pip install entrix[dev]
 uvx --from entrix entrix --help
 uvx --from entrix entrix run --tier fast
 ```
+
+### Develop from the Routa.js checkout
+
+If you are using the copy of `entrix` vendored in the Routa.js monorepo, the
+current repository workflow is:
+
+```bash
+pip install -e tools/entrix
+
+PYTHONPATH=tools/entrix python3 -m entrix --help
+PYTHONPATH=tools/entrix python3 -m entrix run --tier fast
+PYTHONPATH=tools/entrix python3 -m entrix review-trigger --base HEAD~1
+```
+
+Most local hooks and helper scripts in this repository use the
+`PYTHONPATH=tools/entrix python3 -m entrix ...` form so they can run directly
+from the monorepo checkout without requiring a separately installed global
+binary.
 
 ### Develop the package itself from source
 
@@ -385,21 +402,12 @@ entrix review-trigger --fail-on-trigger
 entrix review-trigger --config docs/fitness/review-triggers.yaml
 ```
 
-### `entrix serve`
-
-Starts the MCP server for AI agent integration. Requires `pip install entrix[mcp]`.
-
-```bash
-entrix serve
-```
-
-See [MCP Server](#mcp-server-ai-agent-integration) for details.
-
 ### `entrix analyze long-file`
 
 Structural analysis for oversized or explicit source files. Returns ClassMap / FunctionMap payloads showing classes, methods, and standalone functions with line spans.
 
-Supported languages: Python, Rust, TypeScript, JavaScript.
+Supported languages: Python, Rust, Go, Java, and TypeScript/JavaScript
+(including `tsx` / `jsx` files).
 
 ```bash
 entrix analyze long-file --files src/app.ts src/lib.ts
@@ -480,41 +488,6 @@ Build an AI-friendly review context from the current graph.
 entrix graph review-context --base HEAD~1 --json
 entrix graph review-context --base HEAD~1 --max-files 20 --no-source
 entrix graph review-context --base HEAD~1 --output context.json
-```
-
-## MCP Server (AI Agent Integration)
-
-Entrix can run as an MCP (Model Context Protocol) server, exposing fitness functions as tools for AI agents.
-
-Install the optional dependency:
-
-```bash
-pip install entrix[mcp]
-```
-
-Start the server:
-
-```bash
-entrix serve
-```
-
-The server exposes three tools over stdio transport:
-
-- `run_fitness` — run fitness checks and return a structured report (supports `tier`, `scope`, `parallel`, `dry_run`, `min_score` parameters)
-- `get_dimension_status` — get the current status of a specific fitness dimension by name
-- `analyze_change_impact` — analyze the blast radius of changes using the code graph
-
-Example MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "entrix": {
-      "command": "entrix",
-      "args": ["serve"]
-    }
-  }
-}
 ```
 
 ## Preset System
@@ -614,13 +587,24 @@ for dimension in dimensions:
 
 ## Recommended Hook Integration
 
-For local repositories, a practical pattern is:
+For generic repositories, a practical pattern is:
 
 - `pre-commit`: run `entrix hook file-length` first, then quick lint
 - `pre-push`: run full checks, then print review-trigger warnings
 - CI: run `entrix run` and publish JSON/report output
 
 That lets automation catch deterministic failures early while still escalating ambiguous risky changes to humans.
+
+### Current Routa.js hook layout
+
+The current Routa.js monorepo intentionally uses a slightly different split:
+
+- `pre-commit`: `npm run lint`
+- `post-commit`: `PYTHONPATH=tools/entrix python3 -m entrix hook file-length --config tools/entrix/file_budgets.pre_commit.json --strict-limit ...` as a warning-only budget report
+- `pre-push`: `./scripts/smart-check.sh`, which runs a curated `entrix run --metric ...` set and then evaluates `review-trigger`
+
+This keeps commit-time friction low while still surfacing file-budget drift and
+enforcing the higher-signal fitness gates before push.
 
 ### Reusable file-length guard
 
@@ -650,8 +634,8 @@ Current constraints to be aware of:
 - the default authoring format is still markdown frontmatter under `docs/fitness`
 - the project is evolving toward a cleaner core / adapter / preset split
 - graph commands require the optional graph dependency: `pip install entrix[graph]`
-- MCP server requires the optional mcp dependency: `pip install entrix[mcp]`
-- `analyze long-file` structural analysis supports Python, Rust, TypeScript, and JavaScript
+- the current public CLI in this checkout exposes `run`, `validate`, `review-trigger`, `hook`, `analyze`, and `graph`
+- `analyze long-file` structural analysis supports Python, Rust, Go, Java, TypeScript, and JavaScript
 
 ## Status
 
