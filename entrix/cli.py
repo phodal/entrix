@@ -353,7 +353,13 @@ def cmd_review_trigger(args: argparse.Namespace) -> int:
     rules = load_review_triggers(config_path)
     changed_files = args.files or collect_review_changed_files(project_root, args.base)
     diff_stats = collect_diff_stats(project_root, args.base)
-    report = evaluate_review_triggers(rules, changed_files, diff_stats, base=args.base)
+    report = evaluate_review_triggers(
+        rules,
+        changed_files,
+        diff_stats,
+        base=args.base,
+        repo_root=project_root,
+    )
 
     if args.json:
         _print_json(report.to_dict())

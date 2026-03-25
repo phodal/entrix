@@ -23,6 +23,11 @@ def _write_review_trigger_config(tmp_path: Path) -> Path:
                   - src/core/acp/**
                 severity: high
                 action: require_human_review
+              - name: directory_file_count_guard
+                type: directory_file_count
+                directories:
+                  - scripts
+                max_files: 2
               - name: sensitive_contract_change
                 type: sensitive_file_change
                 paths:
@@ -60,11 +65,12 @@ def test_load_review_triggers(tmp_path: Path):
 
     rules = load_review_triggers(config)
 
-    assert len(rules) == 5
+    assert len(rules) == 6
     assert rules[0].paths == ("src/core/acp/**",)
-    assert rules[4].max_files == 5
-    assert rules[2].evidence_paths == ("docs/fitness/**",)
-    assert rules[3].min_boundaries == 2
+    assert rules[1].directories == ("scripts",)
+    assert rules[5].max_files == 5
+    assert rules[3].evidence_paths == ("docs/fitness/**",)
+    assert rules[4].min_boundaries == 2
 
 
 def test_evaluate_review_triggers_matches_changed_paths(tmp_path: Path):
@@ -91,6 +97,28 @@ def test_evaluate_review_triggers_matches_diff_size(tmp_path: Path):
     assert report.human_review_required is True
     names = {trigger.name for trigger in report.triggers}
     assert "oversized_change" in names
+
+
+def test_evaluate_review_triggers_directory_file_count(tmp_path: Path):
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir()
+    (scripts_dir / "a.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+    (scripts_dir / "b.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+    (scripts_dir / "c.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+    (scripts_dir / "nested").mkdir()
+    (scripts_dir / "nested" / "ignored.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+
+    report = evaluate_review_triggers(
+        load_review_triggers(_write_review_trigger_config(tmp_path)),
+        ["scripts/a.sh"],
+        DiffStats(file_count=1, added_lines=5, deleted_lines=0),
+        base="HEAD~1",
+        repo_root=tmp_path,
+    )
+
+    names = {trigger.name for trigger in report.triggers}
+    assert "directory_file_count_guard" in names
+    assert "direct files" in report.triggers[0].reasons[0]
 
 
 def test_evaluate_review_triggers_returns_clean_report(tmp_path: Path):

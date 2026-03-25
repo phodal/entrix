@@ -28,6 +28,7 @@ class ReviewTriggerRule:
     severity: str = "medium"
     action: str = "require_human_review"
     paths: tuple[str, ...] = ()
+    directories: tuple[str, ...] = ()
     max_files: int | None = None
     max_added_lines: int | None = None
     max_deleted_lines: int | None = None
@@ -90,6 +91,7 @@ def load_review_triggers(config_path: Path) -> list[ReviewTriggerRule]:
                 severity=entry.get("severity", "medium"),
                 action=entry.get("action", "require_human_review"),
                 paths=tuple(entry.get("paths", [])),
+                directories=tuple(entry.get("directories", [])),
                 max_files=entry.get("max_files"),
                 max_added_lines=entry.get("max_added_lines"),
                 max_deleted_lines=entry.get("max_deleted_lines"),
@@ -153,12 +155,30 @@ def collect_diff_stats(repo_root: Path, base: str) -> DiffStats:
     return DiffStats(file_count=file_count, added_lines=added_lines, deleted_lines=deleted_lines)
 
 
+def _changed_files_in_directory(changed_files: list[str], directory: str) -> list[str]:
+    normalized = directory.strip().strip("/")
+    if not normalized:
+        return []
+    prefix = f"{normalized}/"
+    return [
+        file_path for file_path in changed_files if file_path == normalized or file_path.startswith(prefix)
+    ]
+
+
+def _count_direct_files(repo_root: Path, directory: str) -> int:
+    target = (repo_root / directory).resolve()
+    if not target.exists() or not target.is_dir():
+        return 0
+    return sum(1 for child in target.iterdir() if child.is_file())
+
+
 def evaluate_review_triggers(
     rules: list[ReviewTriggerRule],
     changed_files: list[str],
     diff_stats: DiffStats,
     *,
     base: str,
+    repo_root: Path | None = None,
 ) -> ReviewTriggerReport:
     """Evaluate review-trigger rules for a diff."""
     triggers: list[TriggerMatch] = []
@@ -214,6 +234,32 @@ def evaluate_review_triggers(
                     "diff deleted "
                     f"{diff_stats.deleted_lines} lines (threshold: {rule.max_deleted_lines})"
                 )
+            if reasons:
+                triggers.append(
+                    TriggerMatch(
+                        name=rule.name,
+                        severity=rule.severity,
+                        action=rule.action,
+                        reasons=tuple(reasons),
+                    )
+                )
+        elif rule.type == "directory_file_count":
+            if repo_root is None or rule.max_files is None:
+                continue
+            reasons: list[str] = []
+            for directory in rule.directories:
+                touched_files = _changed_files_in_directory(changed_files, directory)
+                if not touched_files:
+                    continue
+                file_count = _count_direct_files(repo_root, directory)
+                if file_count > rule.max_files:
+                    changed_sample = ", ".join(touched_files[:3])
+                    if len(touched_files) > 3:
+                        changed_sample += ", ..."
+                    reasons.append(
+                        f"directory '{directory}' has {file_count} direct files "
+                        f"(threshold: {rule.max_files}); changed files: {changed_sample}"
+                    )
             if reasons:
                 triggers.append(
                     TriggerMatch(
