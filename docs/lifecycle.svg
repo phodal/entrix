@@ -1,0 +1,275 @@
+<svg width="1440" height="920" viewBox="0 0 1440 920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1440" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#fefce8"/>
+    </linearGradient>
+    <linearGradient id="stageGrad1" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#eff6ff"/>
+      <stop offset="1" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="stageGrad2" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f0fdf4"/>
+      <stop offset="1" stop-color="#dcfce7"/>
+    </linearGradient>
+    <linearGradient id="stageGrad3" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fffbeb"/>
+      <stop offset="1" stop-color="#fef3c7"/>
+    </linearGradient>
+    <linearGradient id="stageGrad4" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fdf2f8"/>
+      <stop offset="1" stop-color="#fce7f3"/>
+    </linearGradient>
+    <linearGradient id="stageGrad5" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f5f3ff"/>
+      <stop offset="1" stop-color="#ede9fe"/>
+    </linearGradient>
+    <linearGradient id="stageGrad6" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ecfdf5"/>
+      <stop offset="1" stop-color="#d1fae5"/>
+    </linearGradient>
+    <linearGradient id="detailGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+    <linearGradient id="outcomeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#f1f5f9"/>
+    </linearGradient>
+    <linearGradient id="foundationGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fefce8"/>
+      <stop offset="1" stop-color="#fde68a"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.07"/>
+    </filter>
+    <filter id="shadowSm" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1 1L10 6L1 11" stroke="#526071" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowDown" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+      <path d="M1 1L5 9L9 1" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </marker>
+    <style>
+      .title { font: 700 28px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .subtitle { font: 500 14px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #526071; }
+      .stageLabel { font: 700 15px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .stageNum { font: 700 11px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #FFFFFF; letter-spacing: 0.05em; }
+      .detailText { font: 500 12.5px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .sectionTitle { font: 700 17px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .body { font: 500 13px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .small { font: 500 12px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #526071; }
+      .outcomeLabel { font: 700 13px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .outcomeBody { font: 500 12px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .costLabel { font: 500 11px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #94a3b8; letter-spacing: 0.03em; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1440" height="920" rx="28" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="60" y="62" class="title">Entrix Lifecycle</text>
+  <text x="60" y="88" class="subtitle">Guardrails embedded in the change lifecycle — from rule definition to release feedback</text>
+
+  <!-- Cost gradient annotation -->
+  <text x="1140" y="62" class="costLabel">LOW FIX COST</text>
+  <text x="1140" y="78" class="costLabel">HIGH AUTOMATION</text>
+  <line x1="1260" y1="88" x2="1380" y2="88" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="1260" y="108" class="costLabel">HIGH FIX COST</text>
+  <text x="1260" y="124" class="costLabel">HUMAN JUDGMENT</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- STAGE ROW: 6 stages as rounded-rect cards          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <!-- Stage A: Requirements / AI-generated Change -->
+  <rect x="60" y="140" width="190" height="90" rx="18" fill="url(#stageGrad1)" stroke="#93c5fd" filter="url(#shadow)"/>
+  <circle cx="82" cy="162" r="11" fill="#3b82f6"/>
+  <text x="78" y="166" class="stageNum">A</text>
+  <text x="100" y="167" class="stageLabel">Requirements</text>
+  <text x="78" y="190" class="detailText">AI-generated change</text>
+  <text x="78" y="207" class="detailText">or manual commit</text>
+
+  <!-- Arrow A→B -->
+  <path d="M250 185H278" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Stage B: Rule Definition -->
+  <rect x="290" y="140" width="190" height="90" rx="18" fill="url(#stageGrad2)" stroke="#86efac" filter="url(#shadow)"/>
+  <circle cx="312" cy="162" r="11" fill="#22c55e"/>
+  <text x="308" y="166" class="stageNum">B</text>
+  <text x="330" y="167" class="stageLabel">Rule Definition</text>
+  <text x="308" y="190" class="detailText">docs/fitness specs</text>
+  <text x="308" y="207" class="detailText">codified quality rules</text>
+
+  <!-- Arrow B→C -->
+  <path d="M480 185H508" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Stage C: Baseline Quality Gates -->
+  <rect x="520" y="140" width="200" height="90" rx="18" fill="url(#stageGrad3)" stroke="#fcd34d" filter="url(#shadow)"/>
+  <circle cx="542" cy="162" r="11" fill="#f59e0b"/>
+  <text x="538" y="166" class="stageNum">C</text>
+  <text x="560" y="167" class="stageLabel">Baseline Gates</text>
+  <text x="538" y="190" class="detailText">compile, lint, tests,</text>
+  <text x="538" y="207" class="detailText">coverage checks</text>
+
+  <!-- Arrow C→D -->
+  <path d="M720 185H748" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Stage D: Risk Identification & Routing -->
+  <rect x="760" y="140" width="200" height="90" rx="18" fill="url(#stageGrad4)" stroke="#f9a8d4" filter="url(#shadow)"/>
+  <circle cx="782" cy="162" r="11" fill="#ec4899"/>
+  <text x="778" y="166" class="stageNum">D</text>
+  <text x="800" y="167" class="stageLabel">Risk Routing</text>
+  <text x="778" y="190" class="detailText">impact radius, schema</text>
+  <text x="778" y="207" class="detailText">drift, suspicious expansion</text>
+
+  <!-- Arrow D→E -->
+  <path d="M960 185H988" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Stage E: Deep Validation -->
+  <rect x="1000" y="140" width="190" height="90" rx="18" fill="url(#stageGrad5)" stroke="#c4b5fd" filter="url(#shadow)"/>
+  <circle cx="1022" cy="162" r="11" fill="#8b5cf6"/>
+  <text x="1017" y="166" class="stageNum">E</text>
+  <text x="1040" y="167" class="stageLabel">Deep Validation</text>
+  <text x="1018" y="190" class="detailText">E2E, visual, semgrep,</text>
+  <text x="1018" y="207" class="detailText">audit, human review</text>
+
+  <!-- Arrow E→F -->
+  <path d="M1190 185H1218" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Stage F: Release & Feedback -->
+  <rect x="1230" y="140" width="170" height="90" rx="18" fill="url(#stageGrad6)" stroke="#6ee7b7" filter="url(#shadow)"/>
+  <circle cx="1252" cy="162" r="11" fill="#10b981"/>
+  <text x="1248" y="166" class="stageNum">F</text>
+  <text x="1270" y="167" class="stageLabel">Release</text>
+  <text x="1248" y="190" class="detailText">merge, deploy,</text>
+  <text x="1248" y="207" class="detailText">feedback loop</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- DETAIL CARDS: sub-items for each stage              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <!-- Dashed lines from stages to detail cards -->
+  <path d="M385 230V268" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDown)"/>
+  <path d="M620 230V268" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDown)"/>
+  <path d="M860 230V268" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDown)"/>
+  <path d="M1095 230V268" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDown)"/>
+  <path d="M1315 230V268" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDown)"/>
+
+  <!-- B details: Rule Definition -->
+  <rect x="290" y="280" width="190" height="130" rx="14" fill="url(#detailGrad)" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="310" y="306" class="detailText">● metrics</text>
+  <text x="310" y="328" class="detailText">● thresholds</text>
+  <text x="310" y="350" class="detailText">● hard gates</text>
+  <text x="310" y="372" class="detailText">● evidence types</text>
+  <text x="310" y="394" class="detailText">● execution scope</text>
+
+  <!-- C details: Baseline Quality Gates -->
+  <rect x="520" y="280" width="200" height="130" rx="14" fill="url(#detailGrad)" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="540" y="306" class="detailText">● compile</text>
+  <text x="540" y="328" class="detailText">● lint</text>
+  <text x="540" y="350" class="detailText">● unit tests</text>
+  <text x="540" y="372" class="detailText">● coverage</text>
+  <text x="540" y="394" class="detailText">● type check</text>
+
+  <!-- D details: Risk Identification -->
+  <rect x="760" y="280" width="200" height="130" rx="14" fill="url(#detailGrad)" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="780" y="306" class="detailText">● API &amp; schema drift</text>
+  <text x="780" y="328" class="detailText">● impact radius</text>
+  <text x="780" y="350" class="detailText">● suspicious expansion</text>
+  <text x="780" y="372" class="detailText">● missing evidence</text>
+  <text x="780" y="394" class="detailText">● review triggers</text>
+
+  <!-- E details: Deep Validation -->
+  <rect x="1000" y="280" width="190" height="130" rx="14" fill="url(#detailGrad)" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="1020" y="306" class="detailText">● API parity</text>
+  <text x="1020" y="328" class="detailText">● E2E &amp; visual</text>
+  <text x="1020" y="350" class="detailText">● semgrep &amp; audit</text>
+  <text x="1020" y="372" class="detailText">● human review</text>
+  <text x="1020" y="394" class="detailText">● contract tests</text>
+
+  <!-- F details: Release & Feedback -->
+  <rect x="1230" y="280" width="170" height="130" rx="14" fill="url(#detailGrad)" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="1250" y="306" class="detailText">● merge &amp; release</text>
+  <text x="1250" y="328" class="detailText">● update rules</text>
+  <text x="1250" y="350" class="detailText">● tune thresholds</text>
+  <text x="1250" y="372" class="detailText">● close the loop</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- OUTCOMES ROW                                        -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <rect x="60" y="460" width="1340" height="100" rx="22" fill="url(#outcomeGrad)" stroke="#cbd5e1" filter="url(#shadow)"/>
+  <text x="86" y="496" class="sectionTitle">Possible Outcomes</text>
+
+  <!-- PASS pill -->
+  <rect x="86" y="510" width="60" height="26" rx="13" fill="#22c55e"/>
+  <text x="98" y="528" class="stageNum">PASS</text>
+  <text x="158" y="528" class="outcomeBody">Continue to review, merge, and release</text>
+
+  <!-- WARN pill -->
+  <rect x="500" y="510" width="64" height="26" rx="13" fill="#f59e0b"/>
+  <text x="510" y="528" class="stageNum">WARN</text>
+  <text x="576" y="528" class="outcomeBody">Strengthen evidence or escalate review depth</text>
+
+  <!-- BLOCK pill -->
+  <rect x="940" y="510" width="70" height="26" rx="13" fill="#ef4444"/>
+  <text x="950" y="528" class="stageNum">BLOCK</text>
+  <text x="1022" y="528" class="outcomeBody">Do not merge — fix and re-validate</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SYSTEM FOUNDATION                                   -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <rect x="60" y="600" width="1340" height="110" rx="22" fill="url(#foundationGrad)" stroke="#f59e0b" filter="url(#shadow)"/>
+  <text x="86" y="636" class="sectionTitle">System Foundation</text>
+
+  <!-- docs/fitness box -->
+  <rect x="100" y="654" width="200" height="40" rx="12" fill="#FFFFFF" stroke="#fcd34d"/>
+  <text x="130" y="679" class="body">docs/fitness/</text>
+
+  <!-- Arrow -->
+  <path d="M300 674H358" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- entrix orchestration box -->
+  <rect x="370" y="654" width="260" height="40" rx="12" fill="#FFFFFF" stroke="#fcd34d"/>
+  <text x="400" y="679" class="body">entrix orchestration</text>
+
+  <!-- Arrow -->
+  <path d="M630 674H688" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- hard gates + weighted score box -->
+  <rect x="700" y="654" width="340" height="40" rx="12" fill="#FFFFFF" stroke="#fcd34d"/>
+  <text x="720" y="679" class="body">hard gates + weighted score + review triggers</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- FEEDBACK LOOP                                       -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <rect x="60" y="750" width="1340" height="140" rx="22" fill="url(#outcomeGrad)" stroke="#cbd5e1" filter="url(#shadow)"/>
+  <text x="86" y="788" class="sectionTitle">Feedback Loop</text>
+  <text x="86" y="812" class="small">Production issues and missed detections feed back into the rule system</text>
+
+  <!-- Feedback step boxes -->
+  <rect x="100" y="830" width="260" height="42" rx="12" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="120" y="856" class="body">production issue / missed detection</text>
+
+  <path d="M360 851H398" stroke="#526071" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="410" y="830" width="220" height="42" rx="12" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="430" y="856" class="body">update docs/fitness rules</text>
+
+  <path d="M630 851H668" stroke="#526071" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="680" y="830" width="220" height="42" rx="12" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="700" y="856" class="body">refine thresholds</text>
+
+  <path d="M900 851H938" stroke="#526071" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="950" y="830" width="300" height="42" rx="12" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#shadowSm)"/>
+  <text x="970" y="856" class="body">add stronger verification templates</text>
+
+</svg>

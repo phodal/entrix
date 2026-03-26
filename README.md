@@ -24,63 +24,7 @@ Entrix helps teams answer three questions continuously:
 
 ## Lifecycle View
 
-```mermaid
-flowchart LR
-    A[Requirements / AI-generated Change] --> B[Rule Definition]
-    B --> C[Baseline Quality Gates]
-    C --> D[Risk Identification and Routing]
-    D --> E[Deep Validation]
-    E --> F[Release and Feedback]
-
-    B -.-> B1[metrics]
-    B -.-> B2[thresholds]
-    B -.-> B3[hard gates]
-    B -.-> B4[evidence]
-
-    C -.-> C1[compile]
-    C -.-> C2[lint]
-    C -.-> C3[tests]
-    C -.-> C4[coverage]
-
-    D -.-> D1[API and schema]
-    D -.-> D2[impact radius]
-    D -.-> D3[suspicious expansion]
-    D -.-> D4[missing evidence]
-
-    E -.-> E1[API parity]
-    E -.-> E2[E2E and visual]
-    E -.-> E3[semgrep and audit]
-    E -.-> E4[human review]
-
-    F -.-> F1[merge and release]
-    F -.-> F2[update rules]
-    F -.-> F3[tune thresholds]
-    F -.-> F4[close the loop]
-```
-
-The further to the right, the higher the fix cost, the lower the certainty of
-automation, and the more human judgment is required.
-
-Possible outcomes:
-
-- `PASS`: continue to review, merge, and release
-- `WARN`: strengthen evidence or escalate review depth
-- `BLOCK`: do not merge
-
-System foundation:
-
-```text
-docs/fitness  ->  entrix orchestration  ->  hard gates + weighted score + review triggers
-```
-
-Feedback loop:
-
-```text
-production issue / missed detection
-    -> update docs/fitness
-    -> refine thresholds
-    -> add stronger verification templates
-```
+![Entrix Lifecycle](docs/lifecycle.svg)
 
 Additional design context:
 
