@@ -102,6 +102,13 @@ uvx entrix install --repo .
 To install from a marketplace catalog:
 
 ```bash
+/plugin marketplace add phodal/entrix
+/plugin install entrix@entrix
+```
+
+For local testing against this checkout:
+
+```bash
 /plugin marketplace add .
 /plugin install entrix@entrix
 ```
