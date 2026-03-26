@@ -13,11 +13,6 @@ Entrix encodes architecture and quality expectations into executable checks, so 
 ```bash
 /plugin marketplace add phodal/entrix
 /plugin install entrix@entrix
-```
-
-Start the MCP server in your project:
-
-```bash
 entrix serve
 ```
 
@@ -66,10 +61,10 @@ Additional design context:
 /plugin install entrix@entrix
 ```
 
-### 2) CLI or script usage
+### 2) Alternative installation (optional)
 
 <details>
-<summary><strong>Install entrix and run directly</strong></summary>
+<summary><strong>uv / pip</strong></summary>
 <br>
 
 ```bash
@@ -85,7 +80,7 @@ uvx entrix review-trigger --base HEAD~1
 </details>
 
 <details>
-<summary><strong>Extras and repository-local integration</strong></summary>
+<summary><strong>Advanced options</strong></summary>
 <br>
 
 ```bash
