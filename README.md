@@ -8,15 +8,24 @@
 
 Entrix encodes architecture and quality expectations into executable checks, so validation happens with your change flow instead of only after review.
 
-## Quick Start (Claude Code first)
+## Quick Start
+
+### Claude Code Plugin (recommended)
 
 ```bash
 /plugin marketplace add phodal/entrix
 /plugin install entrix@entrix
-entrix serve
 ```
 
-Restart Claude Code after installing or updating plugin files.
+### pip
+
+```bash
+pip install entrix
+entrix install
+```
+
+Restart Claude Code after either method.
+Requires Python 3.10+ and uv.
 
 <details>
 <summary><strong>What it does</strong></summary>
