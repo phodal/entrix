@@ -4,23 +4,46 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/entrix.svg)](https://pypi.org/project/entrix/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Guardrails Embedded in the Change Lifecycle**
+**Harness Engineering + fitness-function guardrails**
 
-Entrix is a Harness Engineering tool for turning quality rules, architecture
-constraints, and validation steps into executable guardrails.
+Entrix encodes architecture and quality expectations into executable checks, so validation happens with your change flow instead of only after review.
 
-Instead of relying on manual review at the end of delivery, Entrix moves
-validation forward: checks become codified, evidence becomes traceable, and
-quality gates become part of the engineering system itself.
+## Quick Start (Claude Code first)
 
-It is designed for teams building in the AI era, where code can be generated
-faster than it can be governed.
+```bash
+/plugin marketplace add phodal/entrix
+/plugin install entrix@entrix
+```
 
-Entrix helps teams answer three questions continuously:
+Start the MCP server in your project:
 
-- should this change pass baseline quality gates?
-- what level of confidence do we have in the current change?
-- when should the system route the change to deeper validation or human review?
+```bash
+entrix serve
+```
+
+Restart Claude Code after installing or updating plugin files.
+
+<details>
+<summary><strong>What it does</strong></summary>
+<br>
+
+- codify quality gates and architecture constraints as reusable fitness specs
+- run checks by `fast` / `normal` / `deep` tiers
+- run change-aware checks on diffs with weighted scoring and hard gates
+- route risky changes to deeper validation with `review-trigger`
+- optionally add graph-based impact, test-radius, and review context analysis
+
+</details>
+
+<details>
+<summary><strong>Guardrails in the change lifecycle</strong></summary>
+<br>
+
+- checks run before risky code lands
+- each run generates evidence
+- policy can hard-stop, warn, or escalate to human review automatically
+
+</details>
 
 ## Lifecycle View
 
@@ -30,103 +53,52 @@ Additional design context:
 
 - `tools/entrix/docs/adr/README.md`: Entrix architecture decisions and rationale
 
-## What It Does
-
-Today the package provides:
-
-- architecture fitness checks grouped by dimension
-- fast / normal / deep execution tiers
-- change-aware execution against the current git diff
-- hard-gate and weighted-score orchestration
-- `review-trigger` rules that ask for human review on risky changes
-- graph-backed impact analysis, test radius estimation, and review context generation
-- structural analysis for oversized files (ClassMap / FunctionMap)
-- preset system for project-specific configuration
-
-It is useful both as:
-
-- a repository-local fitness runner for monorepos and application repos
-- the beginning of a more reusable fitness engine
-
 ## Requirements
 
-- Python 3.10 or later
+- Python 3.10+
 
-## Installation
+## Installation (optional paths)
 
-### Install from PyPI with `uv`
-
-```bash
-uv tool install entrix
-```
-
-Run without installing globally:
-
-```bash
-uvx entrix --help
-uvx entrix run --tier fast
-uvx entrix review-trigger --base HEAD~1
-```
-
-### Install from PyPI with `pip`
-
-```bash
-pip install entrix
-```
-
-### Optional dependencies
-
-Entrix ships optional dependency groups for extended features:
-
-```bash
-# Graph-backed impact analysis (code-review-graph)
-pip install entrix[graph]
-
-# MCP server for AI agent integration (fastmcp)
-pip install entrix[mcp]
-
-# Development tools (pytest, ruff)
-pip install entrix[dev]
-```
-
-### Claude Code Plugin / Marketplace
-
-Entrix includes plugin manifests in `.claude-plugin/`.
-
-For local testing, write a project MCP config:
-
-```bash
-uvx entrix install --repo .
-```
-
-To install from a marketplace catalog:
+### 1) Claude Code plugin (recommended)
 
 ```bash
 /plugin marketplace add phodal/entrix
 /plugin install entrix@entrix
 ```
 
-For local testing against this checkout:
+### 2) CLI or script usage
+
+<details>
+<summary><strong>Install entrix and run directly</strong></summary>
+<br>
 
 ```bash
+uv tool install entrix
+# or
+pip install entrix
+
+uvx entrix --help
+uvx entrix run --tier fast
+uvx entrix review-trigger --base HEAD~1
+```
+
+</details>
+
+<details>
+<summary><strong>Extras and repository-local integration</strong></summary>
+<br>
+
+```bash
+pip install entrix[graph]
+pip install entrix[mcp]
+pip install entrix[dev]
+
+uvx entrix install --repo .
 /plugin marketplace add .
 /plugin install entrix@entrix
 ```
 
-When using plugin mode, keep the default command style:
-
-```bash
-entrix serve
-```
-
-Restart Claude Code after the first install or after updating plugin files.
-
-### Run in a project without global install
-
-```bash
-uvx --from entrix entrix --help
-uvx --from entrix entrix run --tier fast
-```
+</details>
 
 ## Quick Start
 
