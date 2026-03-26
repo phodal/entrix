@@ -16,6 +16,10 @@
   </a>
 </p>
 
+<p align="center">
+  <img src="docs/lifecycle.svg" alt="Entrix Lifecycle" width="85%" />
+</p>
+
 <br>
 
 ## Quick Start
