@@ -1,232 +1,220 @@
-<svg width="1440" height="980" viewBox="0 0 1440 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="1600" height="1120" viewBox="0 0 1600 1120" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1440" y2="980" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#f8fafc"/><stop offset="1" stop-color="#fefce8"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="1120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#FEFCE8"/>
     </linearGradient>
-    <linearGradient id="costBar" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#22c55e"/><stop offset="35%" stop-color="#facc15"/>
-      <stop offset="65%" stop-color="#f97316"/><stop offset="100%" stop-color="#ef4444"/>
+    <linearGradient id="costBar" x1="60" y1="0" x2="1540" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#16A34A"/>
+      <stop offset="38%" stop-color="#EAB308"/>
+      <stop offset="68%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#DC2626"/>
     </linearGradient>
-    <linearGradient id="sg1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eff6ff"/><stop offset="1" stop-color="#dbeafe"/></linearGradient>
-    <linearGradient id="sg2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f0fdf4"/><stop offset="1" stop-color="#dcfce7"/></linearGradient>
-    <linearGradient id="sg3" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffbeb"/><stop offset="1" stop-color="#fef3c7"/></linearGradient>
-    <linearGradient id="sg4" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fdf2f8"/><stop offset="1" stop-color="#fce7f3"/></linearGradient>
-    <linearGradient id="sg5" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5f3ff"/><stop offset="1" stop-color="#ede9fe"/></linearGradient>
-    <linearGradient id="dg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#f8fafc"/></linearGradient>
-    <linearGradient id="jg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fafc"/><stop offset="1" stop-color="#f1f5f9"/></linearGradient>
-    <linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fefce8"/><stop offset="1" stop-color="#fde68a"/></linearGradient>
-    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.07"/></filter>
-    <filter id="ss" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0F172A" flood-opacity="0.05"/></filter>
-    <marker id="ar" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
-      <path d="M1 1L10 6L1 11" stroke="#526071" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </marker>
-    <marker id="ad" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
-      <path d="M1 1L5 9L9 1" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <linearGradient id="stage1" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#EFF6FF"/>
+      <stop offset="1" stop-color="#DBEAFE"/>
+    </linearGradient>
+    <linearGradient id="stage2" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F0FDF4"/>
+      <stop offset="1" stop-color="#DCFCE7"/>
+    </linearGradient>
+    <linearGradient id="stage3" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFBEB"/>
+      <stop offset="1" stop-color="#FEF3C7"/>
+    </linearGradient>
+    <linearGradient id="stage4" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FDF2F8"/>
+      <stop offset="1" stop-color="#FCE7F3"/>
+    </linearGradient>
+    <linearGradient id="stage5" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F5F3FF"/>
+      <stop offset="1" stop-color="#EDE9FE"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F8FAFC"/>
+    </linearGradient>
+    <linearGradient id="sectionWarm" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FEFCE8"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="sectionCool" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#F1F5F9"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto">
+      <path d="M2 2L11 7L2 12" stroke="#526071" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
     <style>
-      .t{font:700 28px ui-sans-serif,-apple-system,sans-serif;fill:#172033}
-      .st{font:500 13px ui-sans-serif,-apple-system,sans-serif;fill:#526071}
-      .sl{font:700 14px ui-sans-serif,-apple-system,sans-serif;fill:#172033}
-      .sn{font:700 11px ui-sans-serif,-apple-system,sans-serif;fill:#FFF;letter-spacing:.05em}
-      .dt{font:500 12px ui-sans-serif,-apple-system,sans-serif;fill:#334155}
-      .se{font:700 16px ui-sans-serif,-apple-system,sans-serif;fill:#172033}
-      .bd{font:500 13px ui-sans-serif,-apple-system,sans-serif;fill:#334155}
-      .sm{font:500 11.5px ui-sans-serif,-apple-system,sans-serif;fill:#526071}
-      .cl{font:600 10.5px ui-sans-serif,-apple-system,sans-serif;letter-spacing:.04em}
-      .jp{font:700 10px ui-sans-serif,-apple-system,sans-serif;fill:#FFF;letter-spacing:.04em}
-      .jb{font:500 12px ui-sans-serif,-apple-system,sans-serif;fill:#475569}
+      .title { font: 700 36px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .subtitle { font: 500 18px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #526071; }
+      .scale { font: 700 13px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 0.08em; }
+      .stepNum { font: 700 13px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #FFFFFF; letter-spacing: 0.05em; }
+      .stageTitle { font: 700 18px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .body { font: 500 14px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .detail { font: 500 14px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .sectionTitle { font: 700 24px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sectionSub { font: 500 15px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #526071; }
+      .pillTitle { font: 700 16px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .pillBody { font: 500 14px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .laneText { font: 600 15px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
     </style>
   </defs>
 
-  <rect width="1440" height="980" rx="28" fill="url(#bg)"/>
+  <rect width="1600" height="1120" rx="32" fill="url(#bg)"/>
 
-  <text x="60" y="58" class="t">Entrix Lifecycle</text>
-  <text x="60" y="80" class="st">Anti-entropy guardrails: machine auto-blocks · machine assists · human must intervene</text>
+  <text x="60" y="64" class="title">Entrix Lifecycle</text>
+  <text x="60" y="96" class="subtitle">Executable guardrails shift quality earlier: auto-block what is deterministic, route ambiguous risk deeper, and leave expensive semantic judgment to humans.</text>
 
-  <rect x="60" y="98" width="1340" height="7" rx="3.5" fill="url(#costBar)" opacity="0.65"/>
-  <text x="60" y="119" class="cl" style="fill:#16a34a">LOW FIX COST · HIGH CERTAINTY · AUTO-BLOCK</text>
-  <text x="1400" y="119" class="cl" style="fill:#dc2626;text-anchor:end">HIGH FIX COST · HIGH SEMANTIC DENSITY · HUMAN JUDGMENT</text>
+  <rect x="60" y="118" width="1480" height="10" rx="5" fill="url(#costBar)" opacity="0.82"/>
+  <text x="60" y="152" class="scale" style="fill:#15803D">LOW FIX COST • HIGH AUTOMATION CONFIDENCE • AUTO-BLOCK</text>
+  <text x="1540" y="152" class="scale" style="fill:#B91C1C; text-anchor:end">HIGH FIX COST • HIGH SEMANTIC DENSITY • HUMAN JUDGMENT</text>
 
+  <rect x="60" y="186" width="272" height="120" rx="22" fill="url(#stage1)" stroke="#93C5FD" filter="url(#shadow)"/>
+  <circle cx="92" cy="220" r="15" fill="#3B82F6"/>
+  <text x="87" y="225" class="stepNum">1</text>
+  <text x="118" y="226" class="stageTitle">Policy Setup</text>
+  <text x="88" y="254" class="body">Define what must be proven</text>
+  <text x="88" y="276" class="body">safe before a change can merge.</text>
 
-  <!-- ══════ 5 STAGES ══════ -->
+  <path d="M332 246H351" stroke="#526071" stroke-width="3" marker-end="url(#arrow)"/>
 
-  <!-- 1 Policy Setup -->
-  <rect x="60" y="138" width="240" height="94" rx="18" fill="url(#sg1)" stroke="#93c5fd" filter="url(#sh)"/>
-  <circle cx="82" cy="160" r="11" fill="#3b82f6"/><text x="78" y="164" class="sn">1</text>
-  <text x="100" y="165" class="sl">Policy Setup</text>
-  <text x="78" y="188" class="dt">Define how this change must</text>
-  <text x="78" y="204" class="dt">be proven safe before merge</text>
+  <rect x="362" y="186" width="272" height="120" rx="22" fill="url(#stage2)" stroke="#86EFAC" filter="url(#shadow)"/>
+  <circle cx="394" cy="220" r="15" fill="#22C55E"/>
+  <text x="389" y="225" class="stepNum">2</text>
+  <text x="420" y="226" class="stageTitle">Quality Gates</text>
+  <text x="390" y="254" class="body">Fast checks catch deterministic</text>
+  <text x="390" y="276" class="body">failures: compile, lint, tests, coverage.</text>
 
-  <path d="M300 185H328" stroke="#526071" stroke-width="2.5" marker-end="url(#ar)"/>
+  <path d="M634 246H653" stroke="#526071" stroke-width="3" marker-end="url(#arrow)"/>
 
-  <!-- 2 Quality Gates -->
-  <rect x="340" y="138" width="240" height="94" rx="18" fill="url(#sg2)" stroke="#86efac" filter="url(#sh)"/>
-  <circle cx="362" cy="160" r="11" fill="#22c55e"/><text x="358" y="164" class="sn">2</text>
-  <text x="380" y="165" class="sl">Quality Gates</text>
-  <text x="358" y="188" class="dt">Fast automated checks:</text>
-  <text x="358" y="204" class="dt">compile, lint, test, coverage</text>
+  <rect x="664" y="186" width="272" height="120" rx="22" fill="url(#stage3)" stroke="#FCD34D" filter="url(#shadow)"/>
+  <circle cx="696" cy="220" r="15" fill="#F59E0B"/>
+  <text x="691" y="225" class="stepNum">3</text>
+  <text x="722" y="226" class="stageTitle">Risk Routing</text>
+  <text x="692" y="254" class="body">Measure change risk using diff size,</text>
+  <text x="692" y="276" class="body">hot paths, graph impact, and triggers.</text>
 
-  <path d="M580 185H608" stroke="#526071" stroke-width="2.5" marker-end="url(#ar)"/>
+  <path d="M936 246H955" stroke="#526071" stroke-width="3" marker-end="url(#arrow)"/>
 
-  <!-- 3 Risk Routing -->
-  <rect x="620" y="138" width="240" height="94" rx="18" fill="url(#sg3)" stroke="#fcd34d" filter="url(#sh)"/>
-  <circle cx="642" cy="160" r="11" fill="#f59e0b"/><text x="638" y="164" class="sn">3</text>
-  <text x="660" y="165" class="sl">Risk Routing</text>
-  <text x="638" y="188" class="dt">Diff size, high-risk paths,</text>
-  <text x="638" y="204" class="dt">graph impact, review triggers</text>
+  <rect x="966" y="186" width="272" height="120" rx="22" fill="url(#stage4)" stroke="#F9A8D4" filter="url(#shadow)"/>
+  <circle cx="998" cy="220" r="15" fill="#EC4899"/>
+  <text x="993" y="225" class="stepNum">4</text>
+  <text x="1024" y="226" class="stageTitle">Deep Validation</text>
+  <text x="994" y="254" class="body">Spend expensive evidence where</text>
+  <text x="994" y="276" class="body">ambiguity remains: API, E2E, security, perf.</text>
 
-  <path d="M860 185H888" stroke="#526071" stroke-width="2.5" marker-end="url(#ar)"/>
+  <path d="M1238 246H1257" stroke="#526071" stroke-width="3" marker-end="url(#arrow)"/>
 
-  <!-- 4 Deep Validation -->
-  <rect x="900" y="138" width="240" height="94" rx="18" fill="url(#sg4)" stroke="#f9a8d4" filter="url(#sh)"/>
-  <circle cx="922" cy="160" r="11" fill="#ec4899"/><text x="918" y="164" class="sn">4</text>
-  <text x="940" y="165" class="sl">Deep Validation</text>
-  <text x="918" y="188" class="dt">API parity, E2E, visual,</text>
-  <text x="918" y="204" class="dt">security scan, perf smoke</text>
+  <rect x="1268" y="186" width="272" height="120" rx="22" fill="url(#stage5)" stroke="#C4B5FD" filter="url(#shadow)"/>
+  <circle cx="1300" cy="220" r="15" fill="#8B5CF6"/>
+  <text x="1294" y="225" class="stepNum">5</text>
+  <text x="1326" y="226" class="stageTitle">Decision Loop</text>
+  <text x="1296" y="254" class="body">Merge decisions become new rules,</text>
+  <text x="1296" y="276" class="body">threshold tuning, and stronger templates.</text>
 
-  <path d="M1140 185H1168" stroke="#526071" stroke-width="2.5" marker-end="url(#ar)"/>
+  <path d="M196 306V338" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <path d="M498 306V338" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <path d="M800 306V338" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <path d="M1102 306V338" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <path d="M1404 306V338" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
 
-  <!-- 5 Decision Loop -->
-  <rect x="1180" y="138" width="220" height="94" rx="18" fill="url(#sg5)" stroke="#c4b5fd" filter="url(#sh)"/>
-  <circle cx="1202" cy="160" r="11" fill="#8b5cf6"/><text x="1197" y="164" class="sn">5</text>
-  <text x="1220" y="165" class="sl">Decision Loop</text>
-  <text x="1198" y="188" class="dt">Hard gates + score model,</text>
-  <text x="1198" y="204" class="dt">incidents feed back as rules</text>
+  <rect x="60" y="348" width="272" height="158" rx="18" fill="url(#panel)" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="84" y="380" class="detail">• metrics and thresholds</text>
+  <text x="84" y="408" class="detail">• hard gates vs advisory gates</text>
+  <text x="84" y="436" class="detail">• evidence type and confidence</text>
+  <text x="84" y="464" class="detail">• execution scope and tier</text>
+  <text x="84" y="492" class="detail">• run_when_changed targeting</text>
 
+  <rect x="362" y="348" width="272" height="158" rx="18" fill="url(#panel)" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="386" y="380" class="detail">• compile and type check</text>
+  <text x="386" y="408" class="detail">• lint and policy conformance</text>
+  <text x="386" y="436" class="detail">• unit tests and smoke tests</text>
+  <text x="386" y="464" class="detail">• coverage baseline</text>
+  <text x="386" y="492" class="detail">• file budget enforcement</text>
 
-  <!-- ══════ DETAIL CARDS ══════ -->
+  <rect x="664" y="348" width="272" height="158" rx="18" fill="url(#panel)" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="688" y="380" class="detail">• API or schema drift</text>
+  <text x="688" y="408" class="detail">• blast radius from the graph</text>
+  <text x="688" y="436" class="detail">• suspicious change expansion</text>
+  <text x="688" y="464" class="detail">• missing evidence detection</text>
+  <text x="688" y="492" class="detail">• review-trigger escalation</text>
 
-  <!-- dashed connectors -->
-  <path d="M180 232V266" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ad)"/>
-  <path d="M460 232V266" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ad)"/>
-  <path d="M740 232V266" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ad)"/>
-  <path d="M1020 232V266" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ad)"/>
-  <path d="M1290 232V266" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ad)"/>
+  <rect x="966" y="348" width="272" height="158" rx="18" fill="url(#panel)" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="990" y="380" class="detail">• API parity and contract checks</text>
+  <text x="990" y="408" class="detail">• E2E and visual verification</text>
+  <text x="990" y="436" class="detail">• security scan or audit</text>
+  <text x="990" y="464" class="detail">• accessibility checks</text>
+  <text x="990" y="492" class="detail">• performance smoke</text>
 
-  <!-- 1 details -->
-  <rect x="60" y="278" width="240" height="120" rx="14" fill="url(#dg)" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="80" y="302" class="dt">● metrics &amp; thresholds</text>
-  <text x="80" y="322" class="dt">● hard gates vs soft gates</text>
-  <text x="80" y="342" class="dt">● evidence types</text>
-  <text x="80" y="362" class="dt">● execution scope &amp; tier</text>
-  <text x="80" y="382" class="dt">● run_when_changed</text>
+  <rect x="1268" y="348" width="272" height="158" rx="18" fill="url(#panel)" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="1292" y="380" class="detail">• PASS, WARN, or BLOCK</text>
+  <text x="1292" y="408" class="detail">• hard gate plus weighted score</text>
+  <text x="1292" y="436" class="detail">• release incidents written back</text>
+  <text x="1292" y="464" class="detail">• threshold tuning</text>
+  <text x="1292" y="492" class="detail">• stronger verification templates</text>
 
-  <!-- 2 details -->
-  <rect x="340" y="278" width="240" height="120" rx="14" fill="url(#dg)" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="360" y="302" class="dt">● compile &amp; type check</text>
-  <text x="360" y="322" class="dt">● lint (ESLint, Clippy)</text>
-  <text x="360" y="342" class="dt">● unit tests</text>
-  <text x="360" y="362" class="dt">● coverage baseline</text>
-  <text x="360" y="382" class="dt">● file budget enforcement</text>
+  <rect x="60" y="546" width="1480" height="178" rx="24" fill="url(#sectionCool)" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="88" y="590" class="sectionTitle">Judgment Structure</text>
+  <text x="88" y="616" class="sectionSub">Put automation where evidence is deterministic. Put humans where semantic error is expensive.</text>
 
-  <!-- 3 details -->
-  <rect x="620" y="278" width="240" height="120" rx="14" fill="url(#dg)" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="640" y="302" class="dt">● API &amp; schema drift</text>
-  <text x="640" y="322" class="dt">● blast radius (graph)</text>
-  <text x="640" y="342" class="dt">● suspicious expansion</text>
-  <text x="640" y="362" class="dt">● missing evidence</text>
-  <text x="640" y="382" class="dt">● review-trigger rules</text>
+  <rect x="88" y="638" width="430" height="58" rx="14" fill="#F0FDF4" stroke="#86EFAC" filter="url(#softShadow)"/>
+  <rect x="104" y="654" width="18" height="18" rx="4" fill="#22C55E"/>
+  <text x="136" y="667" class="pillTitle" style="fill:#15803D">Machine auto-blocks</text>
+  <text x="104" y="686" class="pillBody">compile, lint, type checks, hard gates, file budgets</text>
 
-  <!-- 4 details -->
-  <rect x="900" y="278" width="240" height="120" rx="14" fill="url(#dg)" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="920" y="302" class="dt">● API parity &amp; contract</text>
-  <text x="920" y="322" class="dt">● E2E &amp; visual regression</text>
-  <text x="920" y="342" class="dt">● semgrep &amp; security audit</text>
-  <text x="920" y="362" class="dt">● accessibility checks</text>
-  <text x="920" y="382" class="dt">● performance smoke</text>
+  <rect x="542" y="638" width="440" height="58" rx="14" fill="#FFFBEB" stroke="#FCD34D" filter="url(#softShadow)"/>
+  <rect x="558" y="654" width="18" height="18" rx="4" fill="#F59E0B"/>
+  <text x="590" y="667" class="pillTitle" style="fill:#B45309">Machine assists and flags</text>
+  <text x="558" y="686" class="pillBody">risk routing, graph impact, review triggers, score model</text>
 
-  <!-- 5 details -->
-  <rect x="1180" y="278" width="220" height="120" rx="14" fill="url(#dg)" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="1200" y="302" class="dt">● hard gate + score model</text>
-  <text x="1200" y="322" class="dt">● PASS / WARN / BLOCK</text>
-  <text x="1200" y="342" class="dt">● incident write-back</text>
-  <text x="1200" y="362" class="dt">● threshold tuning</text>
-  <text x="1200" y="382" class="dt">● evidence ledger update</text>
+  <rect x="1006" y="638" width="506" height="58" rx="14" fill="#FEF2F2" stroke="#FCA5A5" filter="url(#softShadow)"/>
+  <rect x="1022" y="654" width="18" height="18" rx="4" fill="#EF4444"/>
+  <text x="1054" y="667" class="pillTitle" style="fill:#B91C1C">Human must intervene</text>
+  <text x="1022" y="686" class="pillBody">contract-sensitive areas, semantic ambiguity, deep validation</text>
 
+  <rect x="60" y="754" width="1480" height="122" rx="24" fill="url(#sectionWarm)" stroke="#F59E0B" filter="url(#shadow)"/>
+  <text x="88" y="798" class="sectionTitle">System Foundation</text>
+  <text x="88" y="824" class="sectionSub">Entrix turns repository-native rules into executable decisions.</text>
 
-  <!-- ══════ JUDGMENT STRUCTURE ══════ -->
+  <rect x="114" y="834" width="260" height="44" rx="12" fill="#FFFFFF" stroke="#FCD34D"/>
+  <text x="146" y="862" class="laneText">docs/fitness/*.md</text>
+  <path d="M374 856H424" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <rect x="438" y="834" width="294" height="44" rx="12" fill="#FFFFFF" stroke="#FCD34D"/>
+  <text x="470" y="862" class="laneText">entrix orchestration</text>
+  <path d="M732 856H782" stroke="#526071" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <rect x="796" y="834" width="626" height="44" rx="12" fill="#FFFFFF" stroke="#FCD34D"/>
+  <text x="828" y="862" class="laneText">hard gates + weighted score + review triggers + evidence output</text>
 
-  <rect x="60" y="440" width="1340" height="130" rx="22" fill="url(#jg)" stroke="#cbd5e1" filter="url(#sh)"/>
-  <text x="86" y="474" class="se">Judgment Structure — Who Decides?</text>
-  <text x="86" y="494" class="sm">Mature human-machine collaboration puts human judgment where it costs the most to get wrong</text>
+  <rect x="60" y="906" width="1480" height="96" rx="24" fill="url(#sectionCool)" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="88" y="948" class="sectionTitle">What Gets Codified in the Repo</text>
 
-  <!-- Machine auto-blocks -->
-  <rect x="86" y="510" width="360" height="44" rx="12" fill="#f0fdf4" stroke="#86efac" filter="url(#ss)"/>
-  <rect x="96" y="520" width="14" height="14" rx="3" fill="#22c55e"/>
-  <text x="118" y="532" class="dt" style="font-weight:700;fill:#15803d">Machine auto-blocks</text>
-  <text x="96" y="546" class="sm">compile, lint, hard gates, type check, file budget</text>
+  <rect x="114" y="958" width="332" height="42" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="142" y="985" class="laneText">rules in repo: docs/fitness</text>
+  <path d="M446 979H494" stroke="#526071" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <rect x="510" y="958" width="408" height="42" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="538" y="985" class="laneText">evidence in repo: VERIFIED / TODO / BLOCKED</text>
+  <path d="M918 979H966" stroke="#526071" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <rect x="982" y="958" width="476" height="42" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="1010" y="985" class="laneText">execution logic: tier, scope, review-trigger, scoring</text>
 
-  <!-- Machine assists + flags -->
-  <rect x="476" y="510" width="400" height="44" rx="12" fill="#fffbeb" stroke="#fcd34d" filter="url(#ss)"/>
-  <rect x="486" y="520" width="14" height="14" rx="3" fill="#f59e0b"/>
-  <text x="508" y="532" class="dt" style="font-weight:700;fill:#b45309">Machine assists &amp; flags</text>
-  <text x="486" y="546" class="sm">risk routing, graph impact, review triggers, score model</text>
-
-  <!-- Human must intervene -->
-  <rect x="906" y="510" width="480" height="44" rx="12" fill="#fef2f2" stroke="#fca5a5" filter="url(#ss)"/>
-  <rect x="916" y="520" width="14" height="14" rx="3" fill="#ef4444"/>
-  <text x="938" y="532" class="dt" style="font-weight:700;fill:#b91c1c">Human must intervene</text>
-  <text x="916" y="546" class="sm">high-risk directory, contract-sensitive area, semantic ambiguity, deep validation</text>
-
-
-  <!-- ══════ SYSTEM FOUNDATION ══════ -->
-
-  <rect x="60" y="600" width="1340" height="100" rx="22" fill="url(#fg)" stroke="#f59e0b" filter="url(#sh)"/>
-  <text x="86" y="634" class="se">System Foundation</text>
-
-  <rect x="100" y="650" width="220" height="36" rx="10" fill="#FFFFFF" stroke="#fcd34d"/>
-  <text x="140" y="673" class="bd">docs/fitness/*.md</text>
-
-  <path d="M320 668H368" stroke="#526071" stroke-width="2.5" marker-end="url(#ar)"/>
-
-  <rect x="380" y="650" width="260" height="36" rx="10" fill="#FFFFFF" stroke="#fcd34d"/>
-  <text x="420" y="673" class="bd">entrix orchestration</text>
-
-  <path d="M640 668H688" stroke="#526071" stroke-width="2.5" marker-end="url(#ar)"/>
-
-  <rect x="700" y="650" width="380" height="36" rx="10" fill="#FFFFFF" stroke="#fcd34d"/>
-  <text x="720" y="673" class="bd">hard gates + weighted score + review triggers</text>
-
-  <!-- ══════ WHAT ENTRIX CODIFIES ══════ -->
-
-  <rect x="60" y="730" width="1340" height="100" rx="22" fill="url(#jg)" stroke="#cbd5e1" filter="url(#sh)"/>
-  <text x="86" y="764" class="se">What Gets Codified Into the Repository</text>
-
-  <rect x="100" y="780" width="300" height="36" rx="10" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="120" y="803" class="bd">Rules in repo (docs/fitness)</text>
-
-  <path d="M400 798H438" stroke="#526071" stroke-width="2" marker-end="url(#ar)"/>
-
-  <rect x="450" y="780" width="340" height="36" rx="10" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="470" y="803" class="bd">Evidence in repo (VERIFIED / TODO / BLOCKED)</text>
-
-  <path d="M790 798H828" stroke="#526071" stroke-width="2" marker-end="url(#ar)"/>
-
-  <rect x="840" y="780" width="380" height="36" rx="10" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="860" y="803" class="bd">Interpretation in executor (tier, scope, review-trigger)</text>
-
-  <!-- ══════ FEEDBACK LOOP ══════ -->
-
-  <rect x="60" y="860" width="1340" height="100" rx="22" fill="url(#jg)" stroke="#cbd5e1" filter="url(#sh)"/>
-  <text x="86" y="894" class="se">Feedback Loop</text>
-  <text x="240" y="894" class="sm">— production issues and missed detections feed back into the rule system</text>
-
-  <rect x="100" y="910" width="260" height="36" rx="10" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="120" y="933" class="bd">incident / missed detection</text>
-
-  <path d="M360 928H398" stroke="#526071" stroke-width="2" marker-end="url(#ar)"/>
-
-  <rect x="410" y="910" width="240" height="36" rx="10" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="430" y="933" class="bd">update docs/fitness rules</text>
-
-  <path d="M650 928H688" stroke="#526071" stroke-width="2" marker-end="url(#ar)"/>
-
-  <rect x="700" y="910" width="200" height="36" rx="10" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="720" y="933" class="bd">refine thresholds</text>
-
-  <path d="M900 928H938" stroke="#526071" stroke-width="2" marker-end="url(#ar)"/>
-
-  <rect x="950" y="910" width="320" height="36" rx="10" fill="#FFFFFF" stroke="#e2e8f0" filter="url(#ss)"/>
-  <text x="970" y="933" class="bd">add stronger verification templates</text>
-
+  <rect x="60" y="1032" width="1480" height="74" rx="24" fill="url(#sectionCool)" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="88" y="1074" class="sectionTitle">Feedback Loop</text>
+  <rect x="266" y="1046" width="260" height="42" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="294" y="1073" class="laneText">incident or missed detection</text>
+  <path d="M526 1067H574" stroke="#526071" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <rect x="590" y="1046" width="272" height="42" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="618" y="1073" class="laneText">update docs/fitness rules</text>
+  <path d="M862 1067H910" stroke="#526071" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <rect x="926" y="1046" width="228" height="42" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="954" y="1073" class="laneText">refine thresholds</text>
+  <path d="M1154 1067H1202" stroke="#526071" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <rect x="1218" y="1046" width="278" height="42" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#softShadow)"/>
+  <text x="1246" y="1073" class="laneText">add stronger checks</text>
 </svg>
