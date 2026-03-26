@@ -1,12 +1,22 @@
-# Entrix
+<h1 align="center">Entrix</h1>
 
-[![PyPI version](https://img.shields.io/pypi/v/entrix.svg)](https://pypi.org/project/entrix/)
-[![Python versions](https://img.shields.io/pypi/pyversions/entrix.svg)](https://pypi.org/project/entrix/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <strong>Shift quality from manual review to executable change guardrails.</strong>
+</p>
 
-**Harness Engineering + fitness-function guardrails**
+<p align="center">
+  <a href="https://pypi.org/project/entrix/">
+    <img src="https://img.shields.io/pypi/v/entrix.svg" alt="PyPI version" />
+  </a>
+  <a href="https://pypi.org/project/entrix/">
+    <img src="https://img.shields.io/pypi/pyversions/entrix.svg" alt="Python versions" />
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License" />
+  </a>
+</p>
 
-Entrix encodes architecture and quality expectations into executable checks, so validation happens with your change flow instead of only after review.
+<br>
 
 ## Quick Start
 
