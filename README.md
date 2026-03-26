@@ -22,7 +22,9 @@
 
 <br>
 
-## Quick Start
+## Install
+
+Choose one installation path:
 
 ### Claude Code Plugin (recommended)
 
@@ -31,15 +33,25 @@
 /plugin install entrix@entrix
 ```
 
-### pip
+Restart Claude Code after plugin installation.
+
+### Standalone CLI (`uv` or `pip`)
 
 ```bash
+uv tool install entrix
+# or
 pip install entrix
-entrix install
+
+entrix --help
 ```
 
-Restart Claude Code after either method.
-Requires Python 3.10+ and uv.
+If you want Claude Code MCP integration in the current repository after installing the CLI:
+
+```bash
+entrix install --repo .
+```
+
+Requires Python 3.10+. `uv` is only needed for the `uv` / `uvx` workflow.
 
 <details>
 <summary><strong>What it does</strong></summary>
@@ -74,13 +86,19 @@ Additional design context:
 ## Requirements
 
 - Python 3.10+
+- Git repository context for commands that use `--base HEAD~1`
 
-## Installation (optional)
+Optional:
 
-### 1) pip / uv (optional alternative)
+- `uv` for `uv tool install ...` and `uvx ...`
+- `pip install entrix[graph]` for graph commands
+
+## Advanced Installation
+
+### Alternate CLI Invocations
 
 <details>
-<summary><strong>uv / pip</strong></summary>
+<summary><strong>CLI invocation options</strong></summary>
 <br>
 
 ```bash
@@ -96,7 +114,7 @@ uvx entrix review-trigger --base HEAD~1
 </details>
 
 <details>
-<summary><strong>Advanced options (optional)</strong></summary>
+<summary><strong>Optional extras</strong></summary>
 <br>
 
 ```bash
@@ -109,7 +127,7 @@ uvx entrix install --repo .
 
 </details>
 
-## Quick Start
+## First Run
 
 ### 1. Create a fitness spec
 
@@ -212,7 +230,7 @@ entrix run --changed-only --base HEAD~1
 entrix validate
 ```
 
-Use `--metric` when you want to run only specific metric names without creating a temporary dimension file split.
+Use `--metric` when you want to run only specific metric names without creating a temporary dimension file split. Commands that use `--base HEAD~1` must run inside a git repository with a valid base revision.
 
 ### 3. Add review triggers
 
@@ -316,7 +334,15 @@ cd entrix
 pip install -e .
 ```
 
-## Commands
+## CLI Reference
+
+Most repositories only need these three commands:
+
+- `entrix run`: execute fitness checks from `docs/fitness/*.md`
+- `entrix validate`: validate the fitness configuration
+- `entrix review-trigger`: escalate risky diffs to human review
+
+Use `entrix analyze long-file` for oversized-file structure analysis and `entrix graph ...` for graph-backed impact analysis.
 
 ### `entrix run`
 
@@ -599,26 +625,21 @@ current file length 2383 exceeds limit 1500: src/app/page.tsx
 
 A copy-pasteable template lives in [`examples/file-length-hook/`](examples/file-length-hook/).
 
-## Known Constraints
+## Project Status
 
-Current constraints to be aware of:
-
-- the package name on PyPI is `entrix`
-- requires Python 3.10 or later
-- the default authoring format is still markdown frontmatter under `docs/fitness`
-- the project is evolving toward a cleaner core / adapter / preset split
-- graph commands require the optional graph dependency: `pip install entrix[graph]`
-- the current public CLI in this checkout exposes `run`, `validate`, `review-trigger`, `hook`, `analyze`, and `graph`
-- `analyze long-file` structural analysis supports Python, Rust, Go, Java, TypeScript, and JavaScript
-
-## Status
-
-Current status:
+Current state:
 
 - stable for production use in real repository workflows
 - installable as a standalone PyPI package
 - suitable for AI-assisted project configuration
-- evolving toward a reusable fitness engine architecture
+
+Current boundaries:
+
+- the default authoring format is markdown frontmatter under `docs/fitness`
+- graph commands require the optional graph dependency: `pip install entrix[graph]`
+- the current public CLI in this checkout exposes `run`, `validate`, `review-trigger`, `hook`, `analyze`, and `graph`
+- `analyze long-file` structural analysis supports Python, Rust, Go, Java, TypeScript, and JavaScript
+- the internal architecture is still evolving toward a cleaner core / adapter / preset split
 
 ## Contributing
 

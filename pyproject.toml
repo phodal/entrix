@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "entrix"
-version = "0.1.12"
+version = "0.1.13"
 description = "A Harness Engineering tool for turning quality rules, architecture constraints, and validation steps into executable guardrails."
 readme = "README.md"
 license = { text = "MIT" }

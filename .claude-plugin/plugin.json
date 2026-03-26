@@ -1,7 +1,7 @@
 {
   "name": "entrix",
   "description": "Harness Engineering plugin exposing executable fitness functions for architecture quality, change-aware validation, and MCP-powered review context.",
-  "version": "0.1.11",
+  "version": "0.1.13",
   "author": {
     "name": "Phodal"
   },
