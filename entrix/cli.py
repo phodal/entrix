@@ -34,6 +34,42 @@ def _find_project_root() -> Path:
     return cwd
 
 
+def _default_mcp_config() -> dict:
+    return {
+        "mcpServers": {
+            "entrix": {
+                "command": "uvx",
+                "args": ["entrix", "serve"],
+            }
+        }
+    }
+
+
+def cmd_install(args: argparse.Namespace) -> int:
+    """Write `.mcp.json` for Claude Code MCP integration."""
+    target = Path(args.repo).resolve() if args.repo else Path.cwd().resolve()
+    mcp_path = target / ".mcp.json"
+    config_text = json.dumps(_default_mcp_config(), indent=2) + "\n"
+
+    if args.dry_run:
+        print(config_text)
+        return 0
+
+    mcp_path.write_text(config_text, encoding="utf-8")
+    print(f"Wrote Claude MCP config to {mcp_path}")
+    print("Run `entrix --help` to verify the command is available.")
+    print("Restart Claude Code after changing MCP settings.")
+    return 0
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
+    """Run Entrix MCP server."""
+    from entrix.server import create_server
+
+    create_server().run(transport="stdio")
+    return 0
+
+
 def _find_fitness_dir(project_root: Path) -> Path:
     """Locate the docs/fitness/ directory relative to project root."""
     fitness_dir = get_project_preset().fitness_dir(project_root)
@@ -622,6 +658,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Restrict execution to a metric name; repeat to include multiple metrics",
     )
     run_parser.set_defaults(func=cmd_run)
+
+    install_parser = subparsers.add_parser(
+        "install",
+        help="Generate `.mcp.json` for Claude Code MCP integration",
+    )
+    install_parser.add_argument(
+        "--repo",
+        default=None,
+        help="Optional repo root (defaults to current working directory).",
+    )
+    install_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print `.mcp.json` content without writing it.",
+    )
+    install_parser.set_defaults(func=cmd_install)
+
+    init_parser = subparsers.add_parser("init", help="Alias for `install`.")
+    init_parser.add_argument(
+        "--repo",
+        default=None,
+        help="Optional repo root (defaults to current working directory).",
+    )
+    init_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print `.mcp.json` content without writing it.",
+    )
+    init_parser.set_defaults(func=cmd_install)
+
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Run Entrix MCP server over stdio.",
+    )
+    serve_parser.set_defaults(func=cmd_serve)
 
     validate_parser = subparsers.add_parser("validate", help="Check dimension weights sum to 100%%")
     validate_parser.set_defaults(func=cmd_validate)

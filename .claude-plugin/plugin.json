@@ -1,0 +1,28 @@
+{
+  "name": "entrix",
+  "description": "A Claude Code plugin for architecture fitness checks and code review context through an MCP server.",
+  "version": "0.1.10",
+  "author": {
+    "name": "Phodal"
+  },
+  "homepage": "https://github.com/phodal/entrix",
+  "repository": "https://github.com/phodal/entrix",
+  "license": "MIT",
+  "keywords": [
+    "fitness",
+    "quality-gates",
+    "architecture",
+    "code-review",
+    "mcp",
+    "claude"
+  ],
+  "mcpServers": {
+    "entrix": {
+      "command": "uvx",
+      "args": [
+        "entrix",
+        "serve"
+      ]
+    }
+  }
+}

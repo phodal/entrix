@@ -1,0 +1,25 @@
+{
+  "name": "entrix",
+  "owner": {
+    "name": "Phodal"
+  },
+  "plugins": [
+    {
+      "name": "entrix",
+      "source": "./",
+      "description": "A Claude Code plugin for architecture fitness checks and change-aware review context.",
+      "version": "0.1.10",
+      "author": {
+        "name": "Phodal"
+      },
+      "category": "development",
+      "tags": [
+        "fitness",
+        "quality",
+        "mcp",
+        "architecture",
+        "code-review"
+      ]
+    }
+  ]
+}

@@ -89,6 +89,31 @@ pip install entrix[mcp]
 pip install entrix[dev]
 ```
 
+### Claude Code Plugin / Marketplace
+
+Entrix includes plugin manifests in `.claude-plugin/`.
+
+For local testing, write a project MCP config:
+
+```bash
+uvx entrix install --repo .
+```
+
+To install from a marketplace catalog:
+
+```bash
+/plugin marketplace add .
+/plugin install entrix@entrix
+```
+
+When using plugin mode, keep the default command style:
+
+```bash
+entrix serve
+```
+
+Restart Claude Code after the first install or after updating plugin files.
+
 ### Run in a project without global install
 
 ```bash
@@ -324,6 +349,23 @@ entrix run --min-score 90
 ```
 
 Use `--output` to write a JSON report to a file (or `-` for stdout), useful for CI artifact collection. Use `--files` to pass an explicit list of changed files for incremental metric selection.
+
+### `entrix install` / `entrix init`
+
+Generate `.mcp.json` for Claude Code MCP integration in a target repository.
+
+```bash
+entrix install --repo .
+entrix init --dry-run
+```
+
+### `entrix serve`
+
+Run the Entrix MCP server over stdio.
+
+```bash
+entrix serve
+```
 
 ### `entrix validate`
 
