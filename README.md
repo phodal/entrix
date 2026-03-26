@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/lifecycle.svg" alt="Entrix Lifecycle" width="85%" />
+  <img src="https://raw.githubusercontent.com/phodal/entrix/main/docs/lifecycle.svg" alt="Entrix Lifecycle" width="85%" />
 </p>
 
 <br>
@@ -77,7 +77,7 @@ Requires Python 3.10+. `uv` is only needed for the `uv` / `uvx` workflow.
 
 ## Lifecycle View
 
-![Entrix Lifecycle](docs/lifecycle.svg)
+![Entrix Lifecycle](https://raw.githubusercontent.com/phodal/entrix/main/docs/lifecycle.svg)
 
 Additional design context:
 
