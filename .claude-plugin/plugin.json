@@ -1,7 +1,7 @@
 {
   "name": "entrix",
-  "description": "A Claude Code plugin for architecture fitness checks and code review context through an MCP server.",
-  "version": "0.1.10",
+  "description": "Harness Engineering plugin exposing executable fitness functions for architecture quality, change-aware validation, and MCP-powered review context.",
+  "version": "0.1.11",
   "author": {
     "name": "Phodal"
   },
