@@ -128,44 +128,6 @@ uvx --from entrix entrix --help
 uvx --from entrix entrix run --tier fast
 ```
 
-### Develop from the Routa.js checkout
-
-If you are using the copy of `entrix` vendored in the Routa.js monorepo, the
-current repository workflow is:
-
-```bash
-pip install -e tools/entrix
-
-PYTHONPATH=tools/entrix python3 -m entrix --help
-PYTHONPATH=tools/entrix python3 -m entrix run --tier fast
-PYTHONPATH=tools/entrix python3 -m entrix review-trigger --base HEAD~1
-```
-
-Most local hooks and helper scripts in this repository use the
-`PYTHONPATH=tools/entrix python3 -m entrix ...` form so they can run directly
-from the monorepo checkout without requiring a separately installed global
-binary.
-
-### Develop the package itself from source
-
-If you are working on the `entrix` package source itself, clone this repository and install it from the repository root.
-
-From the repository root:
-
-```bash
-git clone https://github.com/phodal/entrix.git
-cd entrix
-uv pip install -e .
-```
-
-With `pip`:
-
-```bash
-git clone https://github.com/phodal/entrix.git
-cd entrix
-pip install -e .
-```
-
 ## Quick Start
 
 ### 1. Create a fitness spec
@@ -333,6 +295,44 @@ Example output:
     }
   ]
 }
+```
+
+### Develop from the Routa.js checkout
+
+If you are using the copy of `entrix` vendored in the Routa.js monorepo, the
+current repository workflow is:
+
+```bash
+pip install -e tools/entrix
+
+PYTHONPATH=tools/entrix python3 -m entrix --help
+PYTHONPATH=tools/entrix python3 -m entrix run --tier fast
+PYTHONPATH=tools/entrix python3 -m entrix review-trigger --base HEAD~1
+```
+
+Most local hooks and helper scripts in this repository use the
+`PYTHONPATH=tools/entrix python3 -m entrix ...` form so they can run directly
+from the monorepo checkout without requiring a separately installed global
+binary.
+
+### Develop the package itself from source
+
+If you are working on the `entrix` package source itself, clone this repository and install it from the repository root.
+
+From the repository root:
+
+```bash
+git clone https://github.com/phodal/entrix.git
+cd entrix
+uv pip install -e .
+```
+
+With `pip`:
+
+```bash
+git clone https://github.com/phodal/entrix.git
+cd entrix
+pip install -e .
 ```
 
 ## Commands
