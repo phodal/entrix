@@ -74,12 +74,18 @@
   <text x="60" y="62" class="title">Entrix Lifecycle</text>
   <text x="60" y="88" class="subtitle">Guardrails embedded in the change lifecycle — from rule definition to release feedback</text>
 
-  <!-- Cost gradient annotation -->
-  <text x="1140" y="62" class="costLabel">LOW FIX COST</text>
-  <text x="1140" y="78" class="costLabel">HIGH AUTOMATION</text>
-  <line x1="1260" y1="88" x2="1380" y2="88" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="1260" y="108" class="costLabel">HIGH FIX COST</text>
-  <text x="1260" y="124" class="costLabel">HUMAN JUDGMENT</text>
+  <!-- Cost gradient bar -->
+  <defs>
+    <linearGradient id="costBar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="40%" stop-color="#facc15"/>
+      <stop offset="70%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+  </defs>
+  <rect x="60" y="104" width="1340" height="8" rx="4" fill="url(#costBar)" opacity="0.7"/>
+  <text x="60" y="126" class="costLabel" style="fill:#22c55e; font-weight:700">▲ LOW FIX COST · HIGH AUTOMATION</text>
+  <text x="1400" y="126" class="costLabel" style="fill:#ef4444; font-weight:700; text-anchor:end">HIGH FIX COST · HUMAN JUDGMENT ▲</text>
 
   <!-- ═══════════════════════════════════════════════════ -->
   <!-- STAGE ROW: 6 stages as rounded-rect cards          -->
