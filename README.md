@@ -61,16 +61,9 @@ Additional design context:
 
 - Python 3.10+
 
-## Installation (optional paths)
+## Installation (optional)
 
-### 1) Claude Code plugin (recommended)
-
-```bash
-/plugin marketplace add phodal/entrix
-/plugin install entrix@entrix
-```
-
-### 2) Alternative installation (optional)
+### 1) pip / uv (optional alternative)
 
 <details>
 <summary><strong>uv / pip</strong></summary>
@@ -89,7 +82,7 @@ uvx entrix review-trigger --base HEAD~1
 </details>
 
 <details>
-<summary><strong>Advanced options</strong></summary>
+<summary><strong>Advanced options (optional)</strong></summary>
 <br>
 
 ```bash
@@ -98,8 +91,6 @@ pip install entrix[mcp]
 pip install entrix[dev]
 
 uvx entrix install --repo .
-/plugin marketplace add .
-/plugin install entrix@entrix
 ```
 
 </details>
