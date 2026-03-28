@@ -17,6 +17,7 @@ from entrix.runners.shell import ShellRunner
 from entrix.scoring import score_dimension, score_report
 
 ProgressCallback = Callable[[str, Metric, MetricResult | None], None]
+ProgressSetupCallback = Callable[[list[Dimension]], None]
 
 
 def collect_changed_files(project_root: Path, base: str) -> list[str]:
@@ -114,6 +115,7 @@ def run_fitness_report(
     changed_files: list[str] | None = None,
     base: str = "HEAD",
     progress_callback: ProgressCallback | None = None,
+    progress_setup_callback: ProgressSetupCallback | None = None,
 ) -> tuple[FitnessReport, list[Dimension]]:
     """Execute a fitness run and return report plus the selected dimensions."""
     dimensions = filter_dimensions(load_dimensions(preset.fitness_dir(project_root)), policy)
@@ -133,6 +135,9 @@ def run_fitness_report(
             "ROUTA_FITNESS_CHANGED_BASE": base,
             "ROUTA_FITNESS_CHANGED_FILES": "\n".join(effective_changed_files),
         }
+
+    if progress_setup_callback is not None:
+        progress_setup_callback(dimensions)
 
     shell_runner = ShellRunner(project_root, env_overrides=runner_env)
     sarif_runner = SarifRunner(project_root, env_overrides=runner_env)

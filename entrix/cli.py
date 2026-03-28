@@ -22,7 +22,7 @@ from entrix.review_trigger import (
     load_review_triggers,
 )
 from entrix.reporters.terminal import TerminalReporter
-from entrix.reporters.visual import AsciiReporter, RichReporter
+from entrix.reporters.visual import AsciiReporter, RichLiveProgressReporter, RichReporter
 from entrix.runners.graph import GraphRunner
 
 
@@ -281,7 +281,13 @@ def cmd_run(args: argparse.Namespace) -> int:
         metric_filters=tuple(args.metric or ()),
     )
 
+    output_format = getattr(args, "format", "text")
     reporter = TerminalReporter(verbose=policy.verbose)
+    live_reporter = (
+        RichLiveProgressReporter(stream=sys.stdout)
+        if output_format == "rich" and sys.stdout.isatty() and not policy.dry_run
+        else None
+    )
     reporter.print_header(
         dry_run=policy.dry_run,
         tier=args.tier,
@@ -313,18 +319,25 @@ def cmd_run(args: argparse.Namespace) -> int:
         preset,
         changed_files=changed_files or None,
         base=args.base,
+        progress_setup_callback=(None if live_reporter is None else live_reporter.setup),
         progress_callback=(
             None
             if policy.dry_run
-            else lambda event, metric, result: reporter.print_metric_progress(
-                event,
-                metric_name=metric.name,
-                tier=metric.tier.value,
-                hard_gate=metric.gate == Gate.HARD,
-                result=result,
+            else (
+                live_reporter.handle_progress
+                if live_reporter is not None
+                else lambda event, metric, result: reporter.print_metric_progress(
+                    event,
+                    metric_name=metric.name,
+                    tier=metric.tier.value,
+                    hard_gate=metric.gate == Gate.HARD,
+                    result=result,
+                )
             )
         ),
     )
+    if live_reporter is not None:
+        live_reporter.close()
 
     if not dimensions:
         print("No metrics matched the current run filters; skipping fitness run.")
@@ -339,7 +352,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         )
         return 0
 
-    if args.format == "text":
+    if output_format == "text":
         for dim, ds in zip(dimensions, report.dimensions):
             print(f"\n## {dim.name.upper()} (weight: {dim.weight}%)")
             print(f"   Source: {dim.source_file}")
@@ -369,7 +382,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                 print(f"   Score: {ds.score:.0f}%")
 
         reporter.print_footer(report)
-    elif args.format == "ascii":
+    elif output_format == "ascii":
         AsciiReporter().report(report)
     else:
         RichReporter().report(report)
