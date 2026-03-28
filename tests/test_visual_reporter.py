@@ -66,7 +66,7 @@ def test_rich_live_progress_reporter_tracks_state_and_tail(monkeypatch):
                 weight=100,
                 metrics=[
                     Metric(name="lint", command="npm run lint", tier=Tier.FAST),
-                    Metric(name="tests", command="npm run test", tier=Tier.NORMAL),
+                    Metric(name="tests", command="npm run test", tier=Tier.NORMAL, hard_gate=True),
                 ],
             )
         ]
@@ -93,8 +93,8 @@ def test_rich_live_progress_reporter_tracks_state_and_tail(monkeypatch):
     )
 
     lines = reporter.snapshot_lines()
-    assert lines[0] == "[fitness] 1 passed | 1 failed | 0 running | 0 queued"
-    assert "[1/2] PASSED lint 1.2s" in lines
-    assert "[2/2] FAILED tests 2.2s" in lines
+    assert lines[0] == "[fitness] 1 passed | 1 failed | 0 running | 0 queued | 1 hard-gate failures"
+    assert "[1/2] PASSED(SOFT) lint 1.2s" in lines
+    assert "[2/2] FAILED(HARD) tests 2.2s" in lines
     assert "[fitness tail]" in lines
-    assert "[tests] boom" in lines
+    assert "[tests|HARD|FAILED] boom" in lines

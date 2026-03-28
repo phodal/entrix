@@ -19,6 +19,7 @@ def test_parser_run_defaults():
     assert args.dry_run is False
     assert args.verbose is False
     assert args.format == "text"
+    assert args.progress_refresh == 4
     assert args.min_score == 80.0
     assert args.scope is None
     assert args.output is None
@@ -41,6 +42,8 @@ def test_parser_run_all_flags():
             "--verbose",
             "--format",
             "rich",
+            "--progress-refresh",
+            "8",
             "--min-score",
             "65",
             "--scope",
@@ -68,6 +71,7 @@ def test_parser_run_all_flags():
     assert args.dry_run is True
     assert args.verbose is True
     assert args.format == "rich"
+    assert args.progress_refresh == 8
     assert args.min_score == 65.0
     assert args.scope == "staging"
     assert args.output == "report.json"
@@ -419,6 +423,7 @@ def test_cmd_run_defaults_scope_to_local(monkeypatch):
         parallel=False,
         dry_run=False,
         verbose=False,
+        progress_refresh=4,
         min_score=80.0,
         dimension=[],
         metric=[],

@@ -5,7 +5,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TextIO
 
-from entrix.model import Dimension, DimensionScore, FitnessReport, Metric, MetricResult, ResultState
+from entrix.model import Dimension, DimensionScore, FitnessReport, Gate, Metric, MetricResult, ResultState
 
 PASS_THRESHOLD = 90.0
 WARN_THRESHOLD = 80.0
@@ -45,8 +45,9 @@ def _failing_metrics(report: FitnessReport) -> list[str]:
 class RichLiveProgressReporter:
     """TTY live progress reporter modeled after hook-runtime's rolling dashboard."""
 
-    def __init__(self, *, stream: TextIO, tail_lines: int = 6):
+    def __init__(self, *, stream: TextIO, refresh_per_second: int = 4, tail_lines: int = 6):
         self.stream = stream
+        self.refresh_per_second = max(1, refresh_per_second)
         self.tail_lines = tail_lines
         self._states: dict[str, dict] = {}
         self._order: list[str] = []
@@ -63,6 +64,7 @@ class RichLiveProgressReporter:
                     "metric": metric,
                     "status": "queued",
                     "duration_ms": None,
+                    "hard_gate": metric.gate == Gate.HARD if metric.gate is not None else metric.hard_gate,
                 }
 
         if self._rich is None:
@@ -70,7 +72,12 @@ class RichLiveProgressReporter:
 
         Console, Live = self._rich["Console"], self._rich["Live"]
         self._console = Console(file=self.stream)
-        self._live = Live(self._renderable(), console=self._console, refresh_per_second=8, transient=False)
+        self._live = Live(
+            self._renderable(),
+            console=self._console,
+            refresh_per_second=self.refresh_per_second,
+            transient=False,
+        )
         self._live.start()
 
     def handle_progress(self, event: str, metric: Metric, result: MetricResult | None) -> None:
@@ -95,7 +102,7 @@ class RichLiveProgressReporter:
             state["duration_ms"] = result.duration_ms
             if result.output and result.state in {ResultState.FAIL, ResultState.SKIPPED, ResultState.UNKNOWN}:
                 for line in result.output.strip().splitlines()[:3]:
-                    self._append_tail(metric.name, line)
+                    self._append_tail(metric.name, line, hard_gate=state["hard_gate"], status=status)
         state["status"] = status
         self._refresh()
 
@@ -103,33 +110,50 @@ class RichLiveProgressReporter:
         if self._live is not None:
             self._live.update(self._renderable(), refresh=True)
             self._live.stop()
+            # Keep one final, static snapshot so captured log output is easier to read than
+            # only the last live frame.
+            if self._console is not None:
+                for line in self.snapshot_lines():
+                    self._console.print(line)
             self._live = None
 
     def snapshot_lines(self) -> list[str]:
         counts = {"queued": 0, "running": 0, "passed": 0, "failed": 0, "skipped": 0, "waived": 0, "unknown": 0}
         for state in self._states.values():
             counts[state["status"]] += 1
+        hard_failures = 0
+        for state in self._states.values():
+            if state["status"] == "failed" and state["hard_gate"]:
+                hard_failures += 1
+
         lines = [
             (
                 f"[fitness] {counts['passed']} passed | {counts['failed']} failed | "
-                f"{counts['running']} running | {counts['queued']} queued"
+                f"{counts['running']} running | {counts['queued']} queued | {hard_failures} hard-gate failures"
             )
         ]
         for idx, metric_name in enumerate(self._order, start=1):
             state = self._states[metric_name]
+            gate = "HARD" if state["hard_gate"] else "SOFT"
             duration = (
                 f" {state['duration_ms'] / 1000:.1f}s"
                 if state["duration_ms"] is not None
                 else ""
             )
-            lines.append(f"[{idx}/{len(self._order)}] {state['status'].upper()} {metric_name}{duration}")
+            lines.append(
+                f"[{idx}/{len(self._order)}] {state['status'].upper()}({gate}) {metric_name}{duration}"
+            )
         if self._tail:
             lines.append("[fitness tail]")
             lines.extend(self._tail)
         return lines
 
-    def _append_tail(self, metric_name: str, line: str) -> None:
-        self._tail.append(f"[{metric_name}] {line}".rstrip())
+    def _append_tail(self, metric_name: str, line: str, *, hard_gate: bool, status: str) -> None:
+        marker = "HARD" if hard_gate else "SOFT"
+        clean_line = line.strip().replace("\n", " ")
+        if len(clean_line) > 200:
+            clean_line = clean_line[:197] + "..."
+        self._tail.append(f"[{metric_name}|{marker}|{status.upper()}] {clean_line}".rstrip())
         if len(self._tail) > self.tail_lines:
             self._tail = self._tail[-self.tail_lines :]
 
@@ -150,11 +174,18 @@ class RichLiveProgressReporter:
         for state in self._states.values():
             counts[state["status"]] += 1
 
+        hard_failures = 0
+        for state in self._states.values():
+            if state["status"] == "failed" and state["hard_gate"]:
+                hard_failures += 1
+
         summary = Text.assemble(
             ("[fitness] ", "bold"),
             (f"{counts['passed']} passed", "green"),
             (" | ", ""),
             (f"{counts['failed']} failed", "red"),
+            (" | ", ""),
+            (f"{hard_failures} hard-gate failed", "red" if hard_failures > 0 else "yellow"),
             (" | ", ""),
             (f"{counts['running']} running", "blue"),
             (" | ", ""),
@@ -166,15 +197,18 @@ class RichLiveProgressReporter:
         table.add_column("Metric")
         table.add_column("State", width=10)
         table.add_column("Tier", width=8)
+        table.add_column("Gate", width=6)
         table.add_column("Time", justify="right", width=8)
         for idx, metric_name in enumerate(self._order, start=1):
             state = self._states[metric_name]
             metric = state["metric"]
+            gate = "HARD" if state["hard_gate"] else "SOFT"
             table.add_row(
                 str(idx),
                 metric.name,
                 _status_text(state["status"], Text),
                 metric.tier.value,
+                gate,
                 "" if state["duration_ms"] is None else f"{state['duration_ms'] / 1000:.1f}s",
             )
 

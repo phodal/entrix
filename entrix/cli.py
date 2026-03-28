@@ -284,7 +284,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     output_format = getattr(args, "format", "text")
     reporter = TerminalReporter(verbose=policy.verbose)
     live_reporter = (
-        RichLiveProgressReporter(stream=sys.stdout)
+        RichLiveProgressReporter(
+            stream=sys.stdout,
+            refresh_per_second=max(1, int(args.progress_refresh)),
+        )
         if output_format == "rich" and sys.stdout.isatty() and not policy.dry_run
         else None
     )
@@ -650,6 +653,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["text", "ascii", "rich"],
         default="text",
         help="Render final report as plain text, ASCII scorecard, or rich scorecard",
+    )
+    run_parser.add_argument(
+        "--progress-refresh",
+        type=int,
+        default=4,
+        help="Refresh rate for rich live progress updates",
     )
     run_parser.add_argument(
         "--min-score",
