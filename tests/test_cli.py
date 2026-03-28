@@ -1,8 +1,9 @@
 """Tests for entrix.cli."""
 
 import argparse
+from pathlib import Path
 
-from entrix.cli import _domains_from_files, _metric_domains, build_parser, cmd_analyze_long_file
+from entrix.cli import _domains_from_files, _metric_domains, build_parser, cmd_analyze_long_file, cmd_run
 from entrix.engine import matches_changed_files
 from entrix.model import ExecutionScope, FitnessReport, Metric, MetricResult, ResultState, Tier
 from entrix.presets import get_project_preset
@@ -390,3 +391,40 @@ def test_report_to_dict_includes_result_state():
     )
     payload = report_to_dict(report)
     assert payload["dimensions"][0]["results"][0]["state"] == "waived"
+
+
+def test_cmd_run_defaults_scope_to_local(monkeypatch):
+    captured = {}
+
+    monkeypatch.setattr("entrix.cli._find_project_root", lambda: Path("/tmp"))
+    monkeypatch.setattr("entrix.cli._find_fitness_dir", lambda _project_root: Path("/tmp/docs/fitness"))
+    monkeypatch.setattr("entrix.cli.get_project_preset", lambda: object())
+    monkeypatch.setattr("entrix.cli._collect_run_files", lambda _args, _project_root: [])
+    monkeypatch.setattr(
+        "entrix.cli.run_fitness_report",
+        lambda _project_root, policy, _preset, **_kwargs: (
+            captured.setdefault("execution_scope", policy.execution_scope),
+            [],
+        ),
+    )
+    monkeypatch.setattr("entrix.cli.write_report_output", lambda *_args, **_kwargs: None)
+
+    args = argparse.Namespace(
+        tier=None,
+        scope=None,
+        parallel=False,
+        dry_run=False,
+        verbose=False,
+        min_score=80.0,
+        dimension=[],
+        metric=[],
+        output=None,
+        changed_only=False,
+        files=[],
+        base="HEAD",
+    )
+
+    exit_code = cmd_run(args)
+
+    assert exit_code == 0
+    assert captured["execution_scope"] == ExecutionScope.LOCAL

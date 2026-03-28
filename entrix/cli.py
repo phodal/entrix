@@ -268,7 +268,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     preset = get_project_preset()
 
     tier_filter = Tier(args.tier) if args.tier else None
-    execution_scope = ExecutionScope(args.scope) if args.scope else None
+    execution_scope = ExecutionScope(args.scope) if args.scope else ExecutionScope.LOCAL
     policy = GovernancePolicy(
         tier_filter=tier_filter,
         parallel=args.parallel,
