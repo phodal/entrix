@@ -8,8 +8,11 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import environ
 from pathlib import Path
+from typing import Callable
 
 from entrix.model import Gate, Metric, MetricResult, ResultState
+
+ProgressCallback = Callable[[str, Metric, MetricResult | None], None]
 
 
 class ShellRunner:
@@ -105,19 +108,41 @@ class ShellRunner:
         parallel: bool = False,
         dry_run: bool = False,
         max_workers: int = 4,
+        progress_callback: ProgressCallback | None = None,
     ) -> list[MetricResult]:
         """Execute multiple metrics, optionally in parallel.
 
         Results are returned in the same order as the input metrics.
         """
         if not parallel or dry_run:
-            return [self.run(m, dry_run=dry_run) for m in metrics]
+            results = []
+            for metric in metrics:
+                self._emit_progress(progress_callback, "start", metric)
+                result = self.run(metric, dry_run=dry_run)
+                self._emit_progress(progress_callback, "end", metric, result)
+                results.append(result)
+            return results
 
         results: dict[int, MetricResult] = {}
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(self.run, m): i for i, m in enumerate(metrics)}
+            futures = {}
+            for i, metric in enumerate(metrics):
+                self._emit_progress(progress_callback, "start", metric)
+                futures[executor.submit(self.run, metric)] = (i, metric)
             for future in as_completed(futures):
-                idx = futures[future]
-                results[idx] = future.result()
+                idx, metric = futures[future]
+                result = future.result()
+                self._emit_progress(progress_callback, "end", metric, result)
+                results[idx] = result
 
         return [results[i] for i in range(len(metrics))]
+
+    def _emit_progress(
+        self,
+        callback: ProgressCallback | None,
+        event: str,
+        metric: Metric,
+        result: MetricResult | None = None,
+    ) -> None:
+        if callback is not None:
+            callback(event, metric, result)

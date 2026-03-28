@@ -24,6 +24,32 @@ class TerminalReporter:
             print("(PARALLEL MODE)")
         print("=" * 60)
 
+    def print_metric_progress(
+        self,
+        event: str,
+        *,
+        metric_name: str,
+        tier: str,
+        hard_gate: bool,
+        result: MetricResult | None = None,
+    ) -> None:
+        hard = " [HARD GATE]" if hard_gate else ""
+        tier_label = f" [{tier}]"
+        if event == "start":
+            print(f"[RUNNING] {metric_name}{hard}{tier_label}")
+            return
+
+        status_labels = {
+            ResultState.PASS: "PASS",
+            ResultState.FAIL: "FAIL",
+            ResultState.UNKNOWN: "UNKNOWN",
+            ResultState.SKIPPED: "SKIPPED",
+            ResultState.WAIVED: "WAIVED",
+        }
+        status = status_labels.get(result.state if result else None, "UNKNOWN")
+        duration = f" in {result.duration_ms / 1000:.1f}s" if result and result.duration_ms > 0 else ""
+        print(f"[DONE] {metric_name}: {status}{hard}{tier_label}{duration}")
+
     def print_dimension(self, ds: DimensionScore, *, show_tier: bool = False) -> None:
         print(f"\n## {ds.dimension.upper()} (weight: {ds.weight}%)")
         for result in ds.results:

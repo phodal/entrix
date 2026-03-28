@@ -5,6 +5,7 @@ from __future__ import annotations
 import fnmatch
 import subprocess
 from pathlib import Path
+from typing import Callable
 
 from entrix.governance import GovernancePolicy, filter_dimensions
 from entrix.loaders import load_dimensions
@@ -14,6 +15,8 @@ from entrix.runners.graph import GraphRunner
 from entrix.runners.sarif import SarifRunner
 from entrix.runners.shell import ShellRunner
 from entrix.scoring import score_dimension, score_report
+
+ProgressCallback = Callable[[str, Metric, MetricResult | None], None]
 
 
 def collect_changed_files(project_root: Path, base: str) -> list[str]:
@@ -110,6 +113,7 @@ def run_fitness_report(
     *,
     changed_files: list[str] | None = None,
     base: str = "HEAD",
+    progress_callback: ProgressCallback | None = None,
 ) -> tuple[FitnessReport, list[Dimension]]:
     """Execute a fitness run and return report plus the selected dimensions."""
     dimensions = filter_dimensions(load_dimensions(preset.fitness_dir(project_root)), policy)
@@ -144,6 +148,7 @@ def run_fitness_report(
             parallel=policy.parallel,
             changed_files=effective_changed_files,
             base=base,
+            progress_callback=progress_callback,
         )
         dimension_scores.append(score_dimension(results, dim.name, dim.weight))
 
@@ -160,6 +165,7 @@ def _run_metric_batch(
     parallel: bool,
     changed_files: list[str],
     base: str,
+    progress_callback: ProgressCallback | None,
 ) -> list[MetricResult]:
     """Execute a mixed batch of shell and probe metrics while preserving order."""
     results: list[MetricResult] = []
@@ -177,6 +183,7 @@ def _run_metric_batch(
                     dry_run=dry_run,
                     changed_files=changed_files,
                     base=base,
+                    progress_callback=progress_callback,
                 )
             )
             continue
@@ -213,16 +220,20 @@ def _run_metric_batch(
             shell_batch,
             parallel=parallel,
             dry_run=dry_run,
+            progress_callback=progress_callback,
         )
         for index, result in zip(shell_indexes, shell_results, strict=False):
             results[index] = result
 
     if sarif_batch:
+        for metric in sarif_batch:
+            _emit_progress(progress_callback, "start", metric)
         sarif_results = sarif_runner.run_batch(
             sarif_batch,
             dry_run=dry_run,
         )
-        for index, result in zip(sarif_indexes, sarif_results, strict=False):
+        for metric, index, result in zip(sarif_batch, sarif_indexes, sarif_results, strict=False):
+            _emit_progress(progress_callback, "end", metric, result)
             results[index] = result
 
     return results
@@ -235,10 +246,12 @@ def _run_probe_metric(
     dry_run: bool,
     changed_files: list[str],
     base: str,
+    progress_callback: ProgressCallback | None,
 ) -> MetricResult:
     """Execute a graph-backed probe metric."""
+    _emit_progress(progress_callback, "start", metric)
     if metric.waiver and metric.waiver.is_active():
-        return MetricResult(
+        result = MetricResult(
             metric_name=metric.name,
             passed=True,
             output=f"[WAIVED] {metric.waiver.reason}",
@@ -246,22 +259,26 @@ def _run_probe_metric(
             hard_gate=metric.gate == Gate.HARD,
             state=ResultState.WAIVED,
         )
+        _emit_progress(progress_callback, "end", metric, result)
+        return result
 
     if dry_run:
-        return MetricResult(
+        result = MetricResult(
             metric_name=metric.name,
             passed=True,
             output=f"[DRY-RUN] Would run probe: {metric.command}",
             tier=metric.tier,
             hard_gate=metric.gate == Gate.HARD,
         )
+        _emit_progress(progress_callback, "end", metric, result)
+        return result
 
     if metric.command == "graph:impact":
         result = graph_runner.probe_impact(changed_files or None, base=base)
     elif metric.command in {"graph:test-radius", "graph:test-coverage"}:
         result = graph_runner.probe_test_coverage(changed_files or None, base=base)
     else:
-        return MetricResult(
+        result = MetricResult(
             metric_name=metric.name,
             passed=False,
             output=f"Unsupported probe command: {metric.command}",
@@ -269,8 +286,21 @@ def _run_probe_metric(
             hard_gate=metric.gate == Gate.HARD,
             state=ResultState.UNKNOWN,
         )
+        _emit_progress(progress_callback, "end", metric, result)
+        return result
 
     result.metric_name = metric.name
     result.tier = metric.tier
     result.hard_gate = metric.gate == Gate.HARD
+    _emit_progress(progress_callback, "end", metric, result)
     return result
+
+
+def _emit_progress(
+    callback: ProgressCallback | None,
+    event: str,
+    metric: Metric,
+    result: MetricResult | None = None,
+) -> None:
+    if callback is not None:
+        callback(event, metric, result)

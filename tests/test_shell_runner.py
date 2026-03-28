@@ -101,6 +101,24 @@ def test_run_batch_dry_run():
     assert "[DRY-RUN]" in results[0].output
 
 
+def test_run_batch_emits_progress_events():
+    runner = ShellRunner(Path("/tmp"))
+    metrics = [Metric(name="a", command="echo a"), Metric(name="b", command="echo b")]
+    events: list[tuple[str, str, str | None]] = []
+
+    def capture(event: str, metric: Metric, result) -> None:
+        events.append((event, metric.name, None if result is None else result.state.value))
+
+    runner.run_batch(metrics, progress_callback=capture)
+
+    assert events == [
+        ("start", "a", None),
+        ("end", "a", "pass"),
+        ("start", "b", None),
+        ("end", "b", "pass"),
+    ]
+
+
 def test_run_waived_metric():
     runner = ShellRunner(Path("/tmp"))
     metric = Metric(
