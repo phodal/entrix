@@ -18,6 +18,7 @@ def test_parser_run_defaults():
     assert args.parallel is False
     assert args.dry_run is False
     assert args.verbose is False
+    assert args.format == "text"
     assert args.min_score == 80.0
     assert args.scope is None
     assert args.output is None
@@ -38,6 +39,8 @@ def test_parser_run_all_flags():
             "--parallel",
             "--dry-run",
             "--verbose",
+            "--format",
+            "rich",
             "--min-score",
             "65",
             "--scope",
@@ -64,6 +67,7 @@ def test_parser_run_all_flags():
     assert args.parallel is True
     assert args.dry_run is True
     assert args.verbose is True
+    assert args.format == "rich"
     assert args.min_score == 65.0
     assert args.scope == "staging"
     assert args.output == "report.json"

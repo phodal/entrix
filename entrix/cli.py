@@ -22,6 +22,7 @@ from entrix.review_trigger import (
     load_review_triggers,
 )
 from entrix.reporters.terminal import TerminalReporter
+from entrix.reporters.visual import AsciiReporter, RichReporter
 from entrix.runners.graph import GraphRunner
 
 
@@ -338,35 +339,41 @@ def cmd_run(args: argparse.Namespace) -> int:
         )
         return 0
 
-    for dim, ds in zip(dimensions, report.dimensions):
-        print(f"\n## {dim.name.upper()} (weight: {dim.weight}%)")
-        print(f"   Source: {dim.source_file}")
+    if args.format == "text":
+        for dim, ds in zip(dimensions, report.dimensions):
+            print(f"\n## {dim.name.upper()} (weight: {dim.weight}%)")
+            print(f"   Source: {dim.source_file}")
 
-        for result in ds.results:
-            state_labels = {
-                ResultState.PASS: "\u2705 PASS",
-                ResultState.FAIL: "\u274c FAIL",
-                ResultState.UNKNOWN: "\u2753 UNKNOWN",
-                ResultState.SKIPPED: "\u23ed\ufe0f SKIPPED",
-                ResultState.WAIVED: "\u26a0\ufe0f WAIVED",
-            }
-            status = state_labels.get(result.state, "\u2753 UNKNOWN")
-            hard = " [HARD GATE]" if result.hard_gate else ""
-            tier_label = f" [{result.tier.value}]" if tier_filter else ""
-            print(f"   - {result.metric_name}: {status}{hard}{tier_label}")
+            for result in ds.results:
+                state_labels = {
+                    ResultState.PASS: "\u2705 PASS",
+                    ResultState.FAIL: "\u274c FAIL",
+                    ResultState.UNKNOWN: "\u2753 UNKNOWN",
+                    ResultState.SKIPPED: "\u23ed\ufe0f SKIPPED",
+                    ResultState.WAIVED: "\u26a0\ufe0f WAIVED",
+                }
+                status = state_labels.get(result.state, "\u2753 UNKNOWN")
+                hard = " [HARD GATE]" if result.hard_gate else ""
+                tier_label = f" [{result.tier.value}]" if tier_filter else ""
+                print(f"   - {result.metric_name}: {status}{hard}{tier_label}")
 
-            if result.state == ResultState.FAIL and (policy.verbose or result.hard_gate):
-                if result.output:
-                    lines = result.output.strip().split("\n")
-                    for line in lines[:10]:
-                        print(f"     > {line}")
-                    if len(lines) > 10:
-                        print(f"     > ... ({len(lines) - 10} more lines)")
+                if result.state == ResultState.FAIL and (policy.verbose or result.hard_gate):
+                    if result.output:
+                        lines = result.output.strip().split("\n")
+                        for line in lines[:10]:
+                            print(f"     > {line}")
+                        if len(lines) > 10:
+                            print(f"     > ... ({len(lines) - 10} more lines)")
 
-        if ds.total > 0:
-            print(f"   Score: {ds.score:.0f}%")
+            if ds.total > 0:
+                print(f"   Score: {ds.score:.0f}%")
 
-    reporter.print_footer(report)
+        reporter.print_footer(report)
+    elif args.format == "ascii":
+        AsciiReporter().report(report)
+    else:
+        RichReporter().report(report)
+
     write_report_output(args.output, report_to_dict(report))
 
     return enforce(report, policy)
@@ -625,6 +632,12 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--parallel", action="store_true", help="Run metrics in parallel")
     run_parser.add_argument("--dry-run", action="store_true", help="Show what would run")
     run_parser.add_argument("--verbose", action="store_true", help="Show output on failure")
+    run_parser.add_argument(
+        "--format",
+        choices=["text", "ascii", "rich"],
+        default="text",
+        help="Render final report as plain text, ASCII scorecard, or rich scorecard",
+    )
     run_parser.add_argument(
         "--min-score",
         type=float,

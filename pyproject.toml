@@ -45,6 +45,9 @@ dev = [
     "pytest>=8.0,<9",
     "ruff>=0.3.0,<1",
 ]
+visual = [
+    "rich>=13.0,<14",
+]
 
 [project.scripts]
 entrix = "entrix.cli:main"

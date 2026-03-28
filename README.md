@@ -355,6 +355,8 @@ entrix run --tier fast
 entrix run --parallel
 entrix run --dry-run
 entrix run --verbose
+entrix run --format ascii
+entrix run --format rich
 entrix run --changed-only --base HEAD~1
 entrix run --files src/app.ts src/lib.ts
 entrix run --output report.json
@@ -362,7 +364,7 @@ entrix run --output -              # JSON to stdout
 entrix run --min-score 90
 ```
 
-Use `--output` to write a JSON report to a file (or `-` for stdout), useful for CI artifact collection. Use `--files` to pass an explicit list of changed files for incremental metric selection.
+Use `--output` to write a JSON report to a file (or `-` for stdout), useful for CI artifact collection. Use `--files` to pass an explicit list of changed files for incremental metric selection. Use `--format ascii` for a zero-dependency visual scorecard, or `--format rich` for richer terminal rendering when `rich` is installed (`pip install entrix[visual]`).
 
 ### `entrix install` / `entrix init`
 
