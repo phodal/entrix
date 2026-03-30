@@ -18,6 +18,7 @@ def test_parser_run_defaults():
     assert args.parallel is False
     assert args.dry_run is False
     assert args.verbose is False
+    assert args.stream is False
     assert args.format == "text"
     assert args.progress_refresh == 4
     assert args.min_score == 80.0
@@ -40,6 +41,7 @@ def test_parser_run_all_flags():
             "--parallel",
             "--dry-run",
             "--verbose",
+            "--stream",
             "--format",
             "rich",
             "--progress-refresh",
@@ -70,6 +72,7 @@ def test_parser_run_all_flags():
     assert args.parallel is True
     assert args.dry_run is True
     assert args.verbose is True
+    assert args.stream is True
     assert args.format == "rich"
     assert args.progress_refresh == 8
     assert args.min_score == 65.0
@@ -423,6 +426,7 @@ def test_cmd_run_defaults_scope_to_local(monkeypatch):
         parallel=False,
         dry_run=False,
         verbose=False,
+        stream=False,
         progress_refresh=4,
         min_score=80.0,
         dimension=[],

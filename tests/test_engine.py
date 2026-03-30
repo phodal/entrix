@@ -16,8 +16,16 @@ from entrix.presets import get_project_preset
 
 
 class FakeShellRunner:
-    def __init__(self, _project_root: Path, env_overrides: dict[str, str] | None = None) -> None:
+    def __init__(
+        self,
+        _project_root: Path,
+        env_overrides: dict[str, str] | None = None,
+        stream_output: bool = False,
+        output_callback=None,
+    ) -> None:
         self.env_overrides = env_overrides or {}
+        self.stream_output = stream_output
+        self.output_callback = output_callback
 
     def run_batch(
         self,
@@ -263,3 +271,41 @@ def test_run_fitness_report_emits_progress_events(monkeypatch, tmp_path: Path):
         ("start", "sarif_metric", None),
         ("end", "sarif_metric", "fail"),
     ]
+
+
+def test_run_fitness_report_passes_streaming_shell_options(monkeypatch, tmp_path: Path):
+    captured = {}
+
+    class CapturingShellRunner(FakeShellRunner):
+        def __init__(self, *args, **kwargs) -> None:
+            super().__init__(*args, **kwargs)
+            captured["stream_output"] = self.stream_output
+            captured["output_callback"] = self.output_callback
+
+    monkeypatch.setattr(
+        engine_module,
+        "load_dimensions",
+        lambda _fitness_dir: [
+            Dimension(
+                name="code_quality",
+                weight=100,
+                metrics=[Metric(name="shell_metric", command="npm run lint")],
+            )
+        ],
+    )
+    monkeypatch.setattr(engine_module, "ShellRunner", CapturingShellRunner)
+    monkeypatch.setattr(engine_module, "SarifRunner", FakeSarifRunner)
+    monkeypatch.setattr(engine_module, "GraphRunner", FakeGraphRunner)
+
+    def capture_output(metric: Metric, source: str, line: str) -> None:
+        captured["last_output"] = (metric.name, source, line)
+
+    engine_module.run_fitness_report(
+        tmp_path,
+        GovernancePolicy(stream_output=True),
+        get_project_preset(),
+        shell_output_callback=capture_output,
+    )
+
+    assert captured["stream_output"] is True
+    assert captured["output_callback"] is capture_output

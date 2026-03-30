@@ -50,6 +50,12 @@ class TerminalReporter:
         duration = f" in {result.duration_ms / 1000:.1f}s" if result and result.duration_ms > 0 else ""
         print(f"[DONE] {metric_name}: {status}{hard}{tier_label}{duration}")
 
+    def print_metric_output(self, *, metric_name: str, source: str, line: str) -> None:
+        text = line.rstrip()
+        if not text:
+            return
+        print(f"[LOG][{source}] {metric_name}: {text}")
+
     def print_dimension(self, ds: DimensionScore, *, show_tier: bool = False) -> None:
         print(f"\n## {ds.dimension.upper()} (weight: {ds.weight}%)")
         for result in ds.results:

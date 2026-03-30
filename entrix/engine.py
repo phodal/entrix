@@ -13,6 +13,7 @@ from entrix.model import Dimension, EvidenceType, FitnessReport, Gate, Metric, M
 from entrix.presets.base import ProjectPreset
 from entrix.runners.graph import GraphRunner
 from entrix.runners.sarif import SarifRunner
+from entrix.runners.shell import OutputCallback
 from entrix.runners.shell import ShellRunner
 from entrix.scoring import score_dimension, score_report
 
@@ -116,6 +117,7 @@ def run_fitness_report(
     base: str = "HEAD",
     progress_callback: ProgressCallback | None = None,
     progress_setup_callback: ProgressSetupCallback | None = None,
+    shell_output_callback: OutputCallback | None = None,
 ) -> tuple[FitnessReport, list[Dimension]]:
     """Execute a fitness run and return report plus the selected dimensions."""
     dimensions = filter_dimensions(load_dimensions(preset.fitness_dir(project_root)), policy)
@@ -139,7 +141,12 @@ def run_fitness_report(
     if progress_setup_callback is not None:
         progress_setup_callback(dimensions)
 
-    shell_runner = ShellRunner(project_root, env_overrides=runner_env)
+    shell_runner = ShellRunner(
+        project_root,
+        env_overrides=runner_env,
+        stream_output=policy.stream_output,
+        output_callback=shell_output_callback,
+    )
     sarif_runner = SarifRunner(project_root, env_overrides=runner_env)
     graph_runner = GraphRunner(project_root)
     dimension_scores = []

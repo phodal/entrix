@@ -119,6 +119,24 @@ def test_run_batch_emits_progress_events():
     ]
 
 
+def test_run_streams_output_lines_to_callback():
+    emitted: list[tuple[str, str, str]] = []
+    runner = ShellRunner(
+        Path("/tmp"),
+        stream_output=True,
+        output_callback=lambda metric, source, line: emitted.append((metric.name, source, line.strip())),
+    )
+    metric = Metric(name="streamed", command="printf 'hello\\n'; printf 'oops\\n' >&2")
+
+    result = runner.run(metric)
+
+    assert result.passed is True
+    assert "hello" in result.output
+    assert "oops" in result.output
+    assert ("streamed", "stdout", "hello") in emitted
+    assert ("streamed", "stderr", "oops") in emitted
+
+
 def test_run_waived_metric():
     runner = ShellRunner(Path("/tmp"))
     metric = Metric(

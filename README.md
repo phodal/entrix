@@ -108,6 +108,7 @@ pip install entrix
 
 uvx entrix --help
 uvx entrix run --tier fast
+uvx entrix run --tier normal --stream
 uvx entrix review-trigger --base HEAD~1
 ```
 

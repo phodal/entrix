@@ -275,6 +275,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         parallel=args.parallel,
         dry_run=args.dry_run,
         verbose=args.verbose,
+        stream_output=args.stream,
         min_score=args.min_score,
         execution_scope=execution_scope,
         dimension_filters=tuple(args.dimension or ()),
@@ -336,6 +337,15 @@ def cmd_run(args: argparse.Namespace) -> int:
                     hard_gate=metric.gate == Gate.HARD,
                     result=result,
                 )
+            )
+        ),
+        shell_output_callback=(
+            None
+            if policy.dry_run or live_reporter is not None or output_format != "text" or not policy.stream_output
+            else lambda metric, source, line: reporter.print_metric_output(
+                metric_name=metric.name,
+                source=source,
+                line=line,
             )
         ),
     )
@@ -648,6 +658,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--parallel", action="store_true", help="Run metrics in parallel")
     run_parser.add_argument("--dry-run", action="store_true", help="Show what would run")
     run_parser.add_argument("--verbose", action="store_true", help="Show output on failure")
+    run_parser.add_argument(
+        "--stream",
+        action="store_true",
+        help="Stream shell metric stdout/stderr during execution for text output",
+    )
     run_parser.add_argument(
         "--format",
         choices=["text", "ascii", "rich"],

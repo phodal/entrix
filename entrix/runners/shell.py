@@ -8,11 +8,14 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import environ
 from pathlib import Path
+from queue import Empty, Queue
+from threading import Thread
 from typing import Callable
 
 from entrix.model import Gate, Metric, MetricResult, ResultState
 
 ProgressCallback = Callable[[str, Metric, MetricResult | None], None]
+OutputCallback = Callable[[Metric, str, str], None]
 
 
 class ShellRunner:
@@ -23,10 +26,14 @@ class ShellRunner:
         project_root: Path,
         timeout: int = 300,
         env_overrides: dict[str, str] | None = None,
+        stream_output: bool = False,
+        output_callback: OutputCallback | None = None,
     ):
         self.project_root = project_root
         self.timeout = timeout
         self.env_overrides = env_overrides or {}
+        self.stream_output = stream_output
+        self.output_callback = output_callback
 
     def run(self, metric: Metric, *, dry_run: bool = False) -> MetricResult:
         """Execute a single metric's shell command.
@@ -56,20 +63,15 @@ class ShellRunner:
         start = time.monotonic()
         timeout = metric.timeout_seconds or self.timeout
         try:
-            result = subprocess.run(
-                ["/bin/bash", "-lc", metric.command],
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                cwd=self.project_root,
-                env={**environ, **self.env_overrides},
-            )
-            output = result.stdout + result.stderr
+            if self.stream_output and self.output_callback is not None:
+                output, returncode = self._run_streaming(metric, timeout=timeout)
+            else:
+                output, returncode = self._run_captured(metric, timeout=timeout)
 
             if metric.pattern:
                 passed = bool(re.search(metric.pattern, output, re.IGNORECASE))
             else:
-                passed = result.returncode == 0
+                passed = returncode == 0
 
             elapsed = (time.monotonic() - start) * 1000
             return MetricResult(
@@ -100,6 +102,79 @@ class ShellRunner:
                 hard_gate=metric.gate == Gate.HARD,
                 duration_ms=elapsed,
             )
+
+    def _run_captured(self, metric: Metric, *, timeout: int) -> tuple[str, int]:
+        result = subprocess.run(
+            ["/bin/bash", "-lc", metric.command],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=self.project_root,
+            env={**environ, **self.env_overrides},
+        )
+        return result.stdout + result.stderr, result.returncode
+
+    def _run_streaming(self, metric: Metric, *, timeout: int) -> tuple[str, int]:
+        process = subprocess.Popen(
+            ["/bin/bash", "-lc", metric.command],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+            cwd=self.project_root,
+            env={**environ, **self.env_overrides},
+        )
+        queue: Queue[tuple[str, str | None]] = Queue()
+        chunks: list[str] = []
+
+        def pump(stream, source: str) -> None:
+            if stream is None:
+                queue.put((source, None))
+                return
+            try:
+                for line in iter(stream.readline, ""):
+                    queue.put((source, line))
+            finally:
+                stream.close()
+                queue.put((source, None))
+
+        streams = {
+            "stdout": process.stdout,
+            "stderr": process.stderr,
+        }
+        threads = [
+            Thread(target=pump, args=(stream, source), daemon=True)
+            for source, stream in streams.items()
+        ]
+        for thread in threads:
+            thread.start()
+
+        closed_streams = 0
+        deadline = time.monotonic() + timeout
+        while closed_streams < len(threads):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                process.kill()
+                process.wait()
+                raise subprocess.TimeoutExpired(metric.command, timeout)
+            try:
+                source, chunk = queue.get(timeout=min(0.1, remaining))
+            except Empty:
+                continue
+            if chunk is None:
+                closed_streams += 1
+                continue
+            chunks.append(chunk)
+            self._emit_output(metric, source, chunk)
+
+        returncode = process.wait(timeout=max(0.1, deadline - time.monotonic()))
+        for thread in threads:
+            thread.join(timeout=0.1)
+        return "".join(chunks), returncode
+
+    def _emit_output(self, metric: Metric, source: str, line: str) -> None:
+        if self.output_callback is not None:
+            self.output_callback(metric, source, line)
 
     def run_batch(
         self,
