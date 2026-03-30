@@ -156,6 +156,13 @@ Keep the repository entrypoint short:
 3. if both exist, keep them consistent instead of updating only one
 4. if neither exists, create a minimal `AGENTS.md`
 
+Creation rules are strict:
+
+- do not create a new `CLAUDE.md` when the repository did not already have one
+- do not create a new `AGENTS.md` when `CLAUDE.md` already exists as the sole
+  agent entrypoint unless the user explicitly asks for both
+- if neither exists, create only `AGENTS.md`
+
 Do not duplicate the whole rulebook into the entrypoint file.
 The goal is discoverability from every agent entry document the repository
 already uses, not just the first one you happen to see.
@@ -243,6 +250,8 @@ The skill is complete only when all of the following are true:
 - `manifest.yaml` lists repo-relative evidence file paths
 - every existing repository entry document among `AGENTS.md` and `CLAUDE.md`
   points to the fitness docs consistently
+- no extra agent entry document was created unless the user explicitly asked for
+  it
 - weights sum to `100`
 - every metric maps to a real repository command
 - every `fast` hard gate chosen by the skill is locally runnable, or is called
