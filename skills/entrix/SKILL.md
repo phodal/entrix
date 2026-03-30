@@ -42,9 +42,16 @@ For any bootstrap or repair task, read in this order:
   subdirectory working directory.
 - Prefer checked-in scripts and CI-established commands over plausible
   defaults.
+- For bootstrap output, prefer commands that are runnable in the current local
+  environment, not only commands that look semantically correct from CI or repo
+  structure.
 - Only create a security metric when the repository shows direct evidence for
   that tool in scripts, CI, or checked-in docs. Do not add common scanners by
   assumption.
+- If a candidate metric depends on optional local tooling that is not installed
+  and no checked-in wrapper self-bootstraps it, do not leave it as a default
+  `fast` hard gate. Prefer a locally runnable wrapper, another repo-established
+  signal, or explicit blocker reporting.
 - Use Entrix-compatible schema only. Do not invent alternate manifest or
   frontmatter shapes.
 - If weighted dimensions participate in scoring, their file-level weights must
@@ -178,7 +185,10 @@ Mandatory repair loop:
    or the generated commands are cheap enough to execute locally
 8. if the fast tier fails because of generated command locality or invented
    signals, repair and re-run validation
-9. stop only when validation passes and the generated config is runnable, or
+9. if the fast tier fails because a generated metric requires optional tooling
+   that is not locally runnable, replace it with a repo-safe runnable signal,
+   move it out of the bootstrap fast tier, or report the blocker explicitly
+10. stop only when validation passes and the generated config is runnable, or
    you have a concrete repository blocker
 
 ### 5. Typical failure patterns to fix
@@ -201,6 +211,8 @@ When generated commands are semantically wrong, check for:
 - build commands that differ from the repository's real release/build path
 - commands copied from CI that silently depended on a workflow-specific working
   directory
+- optional toolchain checks that are real in principle but not locally runnable
+  from the target repository without extra undeclared setup
 
 ## Quality Bar
 
@@ -212,6 +224,8 @@ The skill is complete only when all of the following are true:
 - `manifest.yaml` lists repo-relative evidence file paths
 - weights sum to `100`
 - every metric maps to a real repository command
+- every `fast` hard gate chosen by the skill is locally runnable, or is called
+  out as a concrete repository blocker
 - validation has been attempted with Entrix itself
 - the generated config has been exercised beyond `dry-run` whenever a cheap
   fast-tier run is available

@@ -108,6 +108,10 @@ Do not bury them in narrative markdown.
 - If the repository root does not contain the relevant manifest, prefer root
   wrappers such as `just test` or explicit `--manifest-path` forms over bare
   `cargo` commands.
+- For bootstrap output, prefer commands that are locally runnable in the
+  current environment. A metric is not a good default fast-tier candidate when
+  it depends on optional tooling that is absent locally and the repository does
+  not provide a checked-in wrapper that bootstraps or vendors it.
 - Use `pattern` only when output matching is more reliable than raw exit code.
 - Keep metric names stable; reports and CI fan-out often depend on them.
 - If a command is intentionally advisory, express that with metadata instead of
@@ -125,5 +129,7 @@ Do not bury them in narrative markdown.
 - inventing a non-Entrix manifest structure
 - writing commands that only work from a subdirectory when Entrix will execute
   from the repository root
+- using a locally missing optional tool as a default `fast` hard gate when the
+  repository offers no runnable wrapper for it
 - changing `dimension` names casually, because downstream reporting may depend
   on them

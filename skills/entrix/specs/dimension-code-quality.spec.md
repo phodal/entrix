@@ -23,6 +23,8 @@ Guard the shape and maintainability of the code itself.
 - use diff-aware commands for expensive static checks when the repository
   already does that
 - keep hard gates for checks that should truly block merge
+- avoid optional toolchain-specific checks as bootstrap `fast` hard gates unless
+  they are locally runnable or a checked-in repo wrapper bootstraps them
 
 ## Split Guidance
 
