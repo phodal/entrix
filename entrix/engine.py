@@ -144,7 +144,7 @@ def run_fitness_report(
     shell_runner = ShellRunner(
         project_root,
         env_overrides=runner_env,
-        stream_output=policy.stream_output,
+        stream_output=policy.stream_output != "off",
         output_callback=shell_output_callback,
     )
     sarif_runner = SarifRunner(project_root, env_overrides=runner_env)

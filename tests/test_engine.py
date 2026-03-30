@@ -302,7 +302,7 @@ def test_run_fitness_report_passes_streaming_shell_options(monkeypatch, tmp_path
 
     engine_module.run_fitness_report(
         tmp_path,
-        GovernancePolicy(stream_output=True),
+        GovernancePolicy(stream_output="failures"),
         get_project_preset(),
         shell_output_callback=capture_output,
     )

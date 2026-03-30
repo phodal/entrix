@@ -3,8 +3,9 @@
 import argparse
 from pathlib import Path
 
-from entrix.cli import _domains_from_files, _metric_domains, build_parser, cmd_analyze_long_file, cmd_run
+from entrix.cli import _ShellOutputController, _domains_from_files, _metric_domains, build_parser, cmd_analyze_long_file, cmd_run
 from entrix.engine import matches_changed_files
+from entrix.reporters.terminal import TerminalReporter
 from entrix.model import ExecutionScope, FitnessReport, Metric, MetricResult, ResultState, Tier
 from entrix.presets import get_project_preset
 from entrix.reporting import report_to_dict
@@ -18,7 +19,7 @@ def test_parser_run_defaults():
     assert args.parallel is False
     assert args.dry_run is False
     assert args.verbose is False
-    assert args.stream is False
+    assert args.stream == "off"
     assert args.format == "text"
     assert args.progress_refresh == 4
     assert args.min_score == 80.0
@@ -42,6 +43,7 @@ def test_parser_run_all_flags():
             "--dry-run",
             "--verbose",
             "--stream",
+            "all",
             "--format",
             "rich",
             "--progress-refresh",
@@ -72,7 +74,7 @@ def test_parser_run_all_flags():
     assert args.parallel is True
     assert args.dry_run is True
     assert args.verbose is True
-    assert args.stream is True
+    assert args.stream == "all"
     assert args.format == "rich"
     assert args.progress_refresh == 8
     assert args.min_score == 65.0
@@ -89,6 +91,12 @@ def test_parser_validate():
     parser = build_parser()
     args = parser.parse_args(["validate"])
     assert args.command == "validate"
+
+
+def test_parser_run_stream_without_value_defaults_to_failures():
+    parser = build_parser()
+    args = parser.parse_args(["run", "--stream"])
+    assert args.stream == "failures"
 
 
 def test_parser_review_trigger_defaults():
@@ -426,7 +434,7 @@ def test_cmd_run_defaults_scope_to_local(monkeypatch):
         parallel=False,
         dry_run=False,
         verbose=False,
-        stream=False,
+        stream="off",
         progress_refresh=4,
         min_score=80.0,
         dimension=[],
@@ -441,3 +449,51 @@ def test_cmd_run_defaults_scope_to_local(monkeypatch):
 
     assert exit_code == 0
     assert captured["execution_scope"] == ExecutionScope.LOCAL
+
+
+def test_shell_output_controller_streams_all_output_immediately(capsys):
+    controller = _ShellOutputController(TerminalReporter(), mode="all")
+    metric = Metric(name="lint", command="npm run lint")
+
+    controller.handle_output(metric, "stdout", "line one\n")
+
+    out = capsys.readouterr().out
+    assert "[LOG][stdout] lint: line one" in out
+
+
+def test_shell_output_controller_flushes_failure_logs_only_for_failures(capsys):
+    controller = _ShellOutputController(TerminalReporter(), mode="failures")
+    metric = Metric(name="lint", command="npm run lint", tier=Tier.FAST)
+    failure = MetricResult(
+        metric_name="lint",
+        passed=False,
+        output="failed",
+        tier=Tier.FAST,
+        state=ResultState.FAIL,
+    )
+
+    controller.handle_output(metric, "stdout", "line one\n")
+    controller.handle_progress("end", metric, failure)
+
+    out = capsys.readouterr().out
+    assert "[DONE] lint: FAIL [fast]" in out
+    assert "[LOG][stdout] lint: line one" in out
+
+
+def test_shell_output_controller_discards_success_logs_in_failures_mode(capsys):
+    controller = _ShellOutputController(TerminalReporter(), mode="failures")
+    metric = Metric(name="lint", command="npm run lint", tier=Tier.FAST)
+    success = MetricResult(
+        metric_name="lint",
+        passed=True,
+        output="ok",
+        tier=Tier.FAST,
+        state=ResultState.PASS,
+    )
+
+    controller.handle_output(metric, "stdout", "line one\n")
+    controller.handle_progress("end", metric, success)
+
+    out = capsys.readouterr().out
+    assert "[DONE] lint: PASS [fast]" in out
+    assert "[LOG][stdout] lint: line one" not in out

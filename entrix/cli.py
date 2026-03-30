@@ -6,13 +6,14 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from threading import RLock
 
 from entrix.analysis.long_file import analyze_long_files
 from entrix.engine import collect_changed_files, run_fitness_report
 from entrix.file_budgets import evaluate_paths, is_tracked_source_file, load_config
-from entrix.governance import GovernancePolicy, enforce
+from entrix.governance import GovernancePolicy, StreamOutputMode, enforce
 from entrix.loaders import load_dimensions, validate_weights
-from entrix.model import ExecutionScope, Gate, Metric, ResultState, Tier
+from entrix.model import ExecutionScope, Gate, Metric, MetricResult, ResultState, Tier
 from entrix.presets import get_project_preset
 from entrix.reporting import report_to_dict, write_report_output
 from entrix.review_trigger import (
@@ -24,6 +25,52 @@ from entrix.review_trigger import (
 from entrix.reporters.terminal import TerminalReporter
 from entrix.reporters.visual import AsciiReporter, RichLiveProgressReporter, RichReporter
 from entrix.runners.graph import GraphRunner
+
+
+class _ShellOutputController:
+    """Coordinates progress output with optional shell log streaming modes."""
+
+    def __init__(self, reporter: TerminalReporter, *, mode: StreamOutputMode = "off"):
+        self.reporter = reporter
+        self.mode = mode
+        self._buffered_lines: dict[int, list[tuple[str, str]]] = {}
+        self._lock = RLock()
+
+    @property
+    def should_capture_output(self) -> bool:
+        return self.mode != "off"
+
+    def handle_output(self, metric: Metric, source: str, line: str) -> None:
+        if self.mode == "off":
+            return
+        if self.mode == "all":
+            with self._lock:
+                self.reporter.print_metric_output(metric_name=metric.name, source=source, line=line)
+            return
+        with self._lock:
+            self._buffered_lines.setdefault(id(metric), []).append((source, line))
+
+    def handle_progress(self, event: str, metric: Metric, result: MetricResult | None) -> None:
+        with self._lock:
+            self.reporter.print_metric_progress(
+                event,
+                metric_name=metric.name,
+                tier=metric.tier.value,
+                hard_gate=metric.gate == Gate.HARD,
+                result=result,
+            )
+        if event != "end" or self.mode != "failures":
+            return
+        buffered = self._pop_buffer(metric)
+        if result is None or result.state != ResultState.FAIL:
+            return
+        for source, line in buffered:
+            with self._lock:
+                self.reporter.print_metric_output(metric_name=metric.name, source=source, line=line)
+
+    def _pop_buffer(self, metric: Metric) -> list[tuple[str, str]]:
+        with self._lock:
+            return self._buffered_lines.pop(id(metric), [])
 
 
 def _find_project_root() -> Path:
@@ -284,6 +331,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     output_format = getattr(args, "format", "text")
     reporter = TerminalReporter(verbose=policy.verbose)
+    shell_output = _ShellOutputController(reporter, mode=policy.stream_output)
     live_reporter = (
         RichLiveProgressReporter(
             stream=sys.stdout,
@@ -330,23 +378,13 @@ def cmd_run(args: argparse.Namespace) -> int:
             else (
                 live_reporter.handle_progress
                 if live_reporter is not None
-                else lambda event, metric, result: reporter.print_metric_progress(
-                    event,
-                    metric_name=metric.name,
-                    tier=metric.tier.value,
-                    hard_gate=metric.gate == Gate.HARD,
-                    result=result,
-                )
+                else shell_output.handle_progress
             )
         ),
         shell_output_callback=(
             None
-            if policy.dry_run or live_reporter is not None or output_format != "text" or not policy.stream_output
-            else lambda metric, source, line: reporter.print_metric_output(
-                metric_name=metric.name,
-                source=source,
-                line=line,
-            )
+            if policy.dry_run or live_reporter is not None or output_format != "text" or not shell_output.should_capture_output
+            else shell_output.handle_output
         ),
     )
     if live_reporter is not None:
@@ -660,8 +698,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--verbose", action="store_true", help="Show output on failure")
     run_parser.add_argument(
         "--stream",
-        action="store_true",
-        help="Stream shell metric stdout/stderr during execution for text output",
+        nargs="?",
+        choices=["failures", "all"],
+        const="failures",
+        default="off",
+        help="Stream shell metric stdout/stderr for failed metrics or all metrics during text output",
     )
     run_parser.add_argument(
         "--format",
