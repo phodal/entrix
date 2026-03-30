@@ -39,12 +39,14 @@ uvx --from entrix entrix review-trigger --base HEAD~1
 - `code_quality`: lint and obvious change hygiene
 - `testability`: pytest must keep behavior stable
 - `release_readiness`: the package must still build and expose a working CLI
+- `observability`: runtime visibility evidence, modeled as zero-weight runtime guidance
+- `performance`: runtime budget examples, modeled separately from observability
 
 ## Execution Policy
 
 - `fast`: cheap static checks suitable for frequent execution
 - `normal`: adds tests and packaging verification
-- `deep`: reserved for future graph or security integrations
+- `deep`: includes graph-backed checks and runtime-oriented evidence surfaces
 
 Local dogfooding keeps one additional rule: plain local `entrix run` should stay
 green on a fresh machine. Metrics that are authoritative only in CI or other
@@ -68,7 +70,9 @@ bash scripts/skill_regression.sh /abs/path/to/repo-a /abs/path/to/repo-b
 - `code-quality.md`: executable code quality metrics
 - `testability.md`: executable test metrics
 - `release-readiness.md`: build and CLI readiness metrics
+- `runtime/observability.md`: staging-oriented runtime visibility examples
+- `runtime/performance.md`: runtime budget examples kept separate from observability
 - `review-triggers.yaml`: risky-change escalation rules
-- `manifest.yaml`: simple inventory of the active evidence files
+- `manifest.yaml`: simple inventory of the active evidence files, including nested runtime docs
 - `../tests/fixtures/skill_regression/`: bundled repo-profile fixtures for the
   skill regression harness

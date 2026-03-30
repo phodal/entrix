@@ -3,3 +3,5 @@ evidence_files:
   - docs/fitness/code-quality.md
   - docs/fitness/testability.md
   - docs/fitness/release-readiness.md
+  - docs/fitness/runtime/observability.md
+  - docs/fitness/runtime/performance.md

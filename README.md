@@ -139,6 +139,10 @@ By default, `entrix run` looks for specs under the current project's:
 docs/fitness/*.md
 ```
 
+When `docs/fitness/manifest.yaml` is present, Entrix uses the manifest as the
+source of truth. That allows nested evidence files such as
+`docs/fitness/runtime/observability.md` and `docs/fitness/runtime/performance.md`.
+
 Example `docs/fitness/code-quality.md`:
 
 ```yaml
@@ -525,8 +529,12 @@ your-project/
   docs/
     fitness/
       README.md
+      manifest.yaml
       code-quality.md
       security.md
+      runtime/
+        observability.md
+        performance.md
       review-triggers.yaml
 ```
 

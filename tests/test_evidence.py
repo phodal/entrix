@@ -232,6 +232,31 @@ def test_load_dimensions_uses_manifest_when_present(tmp_path: Path):
     assert dims[0].source_file == "runtime/observability.md"
 
 
+def test_repo_runtime_evidence_examples_are_registered_and_parsed():
+    repo_root = Path(__file__).resolve().parents[1]
+    fitness_dir = repo_root / "docs" / "fitness"
+
+    dims = load_dimensions(fitness_dir)
+    by_name = {dim.name: dim for dim in dims}
+
+    assert "observability" in by_name
+    assert "performance" in by_name
+
+    observability = by_name["observability"]
+    performance = by_name["performance"]
+
+    assert observability.weight == 0
+    assert observability.source_file == "runtime/observability.md"
+    assert observability.metrics[0].execution_scope == ExecutionScope.STAGING
+    assert observability.metrics[0].evidence_type == EvidenceType.PROBE
+
+    assert performance.weight == 0
+    assert performance.source_file == "runtime/performance.md"
+    assert performance.metrics[0].execution_scope == ExecutionScope.CI
+    assert performance.metrics[1].execution_scope == ExecutionScope.PROD_OBSERVATION
+    assert performance.metrics[1].confidence == Confidence.UNKNOWN
+
+
 def test_validate_weights():
     from entrix.model import Dimension
 
