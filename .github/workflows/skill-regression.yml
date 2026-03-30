@@ -1,0 +1,47 @@
+name: Skill Regression
+
+on:
+  pull_request:
+    paths:
+      - "skills/entrix/**"
+      - "scripts/skill_regression.sh"
+      - "tests/test_skill_regression_fixtures.py"
+      - "tests/fixtures/skill_regression/**"
+      - ".github/workflows/skill-regression.yml"
+      - "README.md"
+      - "docs/fitness/README.md"
+  push:
+    branches:
+      - main
+    paths:
+      - "skills/entrix/**"
+      - "scripts/skill_regression.sh"
+      - "tests/test_skill_regression_fixtures.py"
+      - "tests/fixtures/skill_regression/**"
+      - ".github/workflows/skill-regression.yml"
+      - "README.md"
+      - "docs/fitness/README.md"
+  workflow_dispatch:
+
+jobs:
+  fixture-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Entrix and test dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run fixture regression tests
+        run: pytest tests/test_skill_regression_fixtures.py
+
+      - name: Run fixture harness smoke
+        run: bash scripts/skill_regression.sh --fixtures

@@ -29,6 +29,9 @@ is a second-level map, not the full implementation.
 - `../examples/minimal-dimension.md`
 - `../examples/advisory-probe-metric.md`
 - `../examples/runtime-zero-weight-dimension.md`
+- `../examples/entry-doc-topology.md`
+- `../examples/ci-scoped-authoritative-metric.md`
+- `../examples/toolchain-boundary-ci-scope.md`
 
 ## Reading Guidance
 
@@ -40,3 +43,8 @@ Read only the specs needed for the current task:
 - adding runtime evidence: `dimension-runtime.spec.md`
 - deciding what to do with build or packaging signals:
   `dimension-release-readiness.spec.md`
+- resolving agent-entry ambiguity: `../examples/entry-doc-topology.md`
+- modeling CI-only authoritative checks:
+  `../examples/ci-scoped-authoritative-metric.md`
+- modeling local toolchain boundaries:
+  `../examples/toolchain-boundary-ci-scope.md`

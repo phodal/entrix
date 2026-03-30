@@ -564,9 +564,36 @@ Bootstrap authoring rules:
   `AGENTS.md`, `CLAUDE.md`, or both
 - if neither entry document exists, create only `AGENTS.md`
 
+Recommended bootstrap policy:
+
+- do not stop at a plausible draft; the bootstrap is done only after local
+  `entrix validate` and plain local `entrix run` pass
+- keep default local runs backed by repo-safe wrappers or cheap smoke checks
+- move authoritative but provisioned checks into `execution_scope: ci`
+- treat `AGENTS.md` and `CLAUDE.md` discoverability as part of the bootstrap,
+  not optional follow-up cleanup
+
 The repository also ships a bundled skill at `skills/entrix/` for agents that
 need to generate or repair `docs/fitness/` automatically. The skill follows the
 same bootstrap rules above and is validated against multiple real repositories.
+
+## Skill Regression Harness
+
+The bundled `/entrix` skill ships with two regression modes:
+
+```bash
+bash scripts/skill_regression.sh --fixtures
+bash scripts/skill_regression.sh /abs/path/to/repo-a /abs/path/to/repo-b
+```
+
+- `--fixtures` validates bundled repository profiles under
+  `tests/fixtures/skill_regression/`
+- path mode injects the bundled skill into each target repository, runs
+  `claude -p /entrix`, then verifies the result with `entrix validate`,
+  `entrix run --dry-run`, `entrix run --tier fast`, and plain `entrix run`
+
+Use fixture mode in CI and path mode for local forward validation against real
+repositories before publishing skill changes.
 
 ## Python API
 
@@ -622,6 +649,18 @@ The current Routa.js monorepo intentionally uses a slightly different split:
 
 This keeps commit-time friction low while still surfacing file-budget drift and
 enforcing the higher-signal fitness gates before push.
+
+## Submodule Bump Guidance
+
+If Entrix is vendored into a larger repository as a git submodule:
+
+- push the Entrix release commit first from a clean `tools/entrix` worktree
+- update the superproject pointer in its own commit
+- prefer a clean superproject branch or worktree for the pointer bump so
+  unrelated application fitness hooks do not block a pure submodule update
+
+This keeps Entrix releases and superproject pointer bumps reviewable as separate
+changes.
 
 ### Reusable file-length guard
 

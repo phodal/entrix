@@ -8,3 +8,4 @@ build/
 .coverage
 .venv/
 venv/
+.artifacts/

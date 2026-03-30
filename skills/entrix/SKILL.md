@@ -21,6 +21,8 @@ This skill now uses a small entrypoint plus reusable spec files under
 - `specs/dimension-boundaries.spec.md`: how to split or merge dimensions
 - `specs/dimension-*.spec.md`: per-dimension guidance
 - `examples/`: copyable minimal snippets
+- `../../tests/fixtures/skill_regression/`: bundled repository profiles used by
+  the skill regression harness
 
 ## Read Order
 
@@ -33,6 +35,8 @@ For any bootstrap or repair task, read in this order:
 4. existing target `docs/fitness/**` if present
 5. this skill's `specs/README.md`
 6. only the specific `specs/dimension-*.spec.md` files needed for the task
+7. matching `examples/*.md` when entry-document or CI-boundary behavior is
+   ambiguous
 
 ## Core Rules
 
@@ -239,6 +243,10 @@ When generated commands are semantically wrong, check for:
   from the target repository without extra undeclared setup
 - real test commands that need dev dependencies the current local environment
   has not installed, even though CI or contributor docs expect them
+- existing `AGENTS.md` and `CLAUDE.md` files where the generated output updated
+  only one of them
+- repositories with only `CLAUDE.md` where the generated output invented a new
+  `AGENTS.md`
 
 ## Quality Bar
 

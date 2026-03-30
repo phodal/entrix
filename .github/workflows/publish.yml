@@ -25,10 +25,16 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Build distributions
+      - name: Install package and dev dependencies
+        run: python -m pip install -e ".[dev]" build
+
+      - name: Run skill fixture regression
         run: |
-          python -m pip install build
-          python -m build
+          pytest tests/test_skill_regression_fixtures.py
+          bash scripts/skill_regression.sh --fixtures
+
+      - name: Build distributions
+        run: python -m build
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

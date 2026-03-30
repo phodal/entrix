@@ -51,6 +51,18 @@ green on a fresh machine. Metrics that are authoritative only in CI or other
 provisioned environments should be modeled with `execution_scope: ci` instead of
 remaining in the default local execution path.
 
+When the bundled `/entrix` skill changes, also run the fixture harness:
+
+```bash
+bash scripts/skill_regression.sh --fixtures
+```
+
+Use path mode for local forward validation against real repositories:
+
+```bash
+bash scripts/skill_regression.sh /abs/path/to/repo-a /abs/path/to/repo-b
+```
+
 ## Files
 
 - `code-quality.md`: executable code quality metrics
@@ -58,3 +70,5 @@ remaining in the default local execution path.
 - `release-readiness.md`: build and CLI readiness metrics
 - `review-triggers.yaml`: risky-change escalation rules
 - `manifest.yaml`: simple inventory of the active evidence files
+- `../tests/fixtures/skill_regression/`: bundled repo-profile fixtures for the
+  skill regression harness

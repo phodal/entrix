@@ -1,0 +1,7 @@
+[project]
+name = "fixture-claude-only-ci-boundary"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]

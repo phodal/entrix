@@ -1,0 +1,5 @@
+schema: fitness-manifest-v1
+evidence_files:
+  - docs/fitness/code-quality.md
+  - docs/fitness/testability.md
+  - docs/fitness/release-readiness.md

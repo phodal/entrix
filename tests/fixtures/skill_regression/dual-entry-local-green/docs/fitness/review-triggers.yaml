@@ -1,0 +1,9 @@
+review_triggers:
+  - name: fixture_docs_change
+    type: changed_paths
+    paths:
+      - docs/fitness/**
+      - AGENTS.md
+      - CLAUDE.md
+    severity: medium
+    action: require_human_review
