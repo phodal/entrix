@@ -350,6 +350,13 @@ Most repositories only need these three commands:
 
 Use `entrix analyze long-file` for oversized-file structure analysis and `entrix graph ...` for graph-backed impact analysis.
 
+## Example Packs
+
+Entrix includes copyable examples under [`examples/`](./examples/):
+
+- [`examples/file-length-hook/`](./examples/file-length-hook/): pre-commit file budget hook
+- [`examples/frontend-quality-pack/`](./examples/frontend-quality-pack/): layered frontend quality gates with review-trigger guidance
+
 ### `entrix run`
 
 Runs dimension-based fitness checks loaded from `docs/fitness/*.md`.

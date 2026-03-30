@@ -1,0 +1,6 @@
+schema: fitness-manifest-v1
+evidence_files:
+  - docs/fitness/code-quality.md
+  - docs/fitness/design-system.md
+  - docs/fitness/ui-consistency.md
+  - docs/fitness/performance.md

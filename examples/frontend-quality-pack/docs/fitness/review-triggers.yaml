@@ -1,0 +1,30 @@
+review_triggers:
+  - name: shell_or_navigation_change
+    type: changed_paths
+    paths:
+      - src/app/**
+      - src/layouts/**
+      - src/components/shell/**
+      - src/components/navigation/**
+    severity: high
+    action: require_human_review
+
+  - name: frontend_docs_without_evidence
+    type: evidence_gap
+    paths:
+      - src/app/**
+      - src/components/**
+    evidence_paths:
+      - docs/fitness/**
+      - stories/**
+      - tests/**
+    severity: medium
+    action: require_human_review
+
+  - name: oversized_frontend_change
+    type: diff_size
+    max_files: 15
+    max_added_lines: 800
+    max_deleted_lines: 500
+    severity: medium
+    action: require_human_review

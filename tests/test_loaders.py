@@ -19,6 +19,23 @@ def test_loader_validate_weights():
     assert total == 100
 
 
+def test_frontend_quality_pack_loads_and_validates():
+    repo_root = Path(__file__).resolve().parents[1]
+    fitness_dir = repo_root / "examples" / "frontend-quality-pack" / "docs" / "fitness"
+
+    dimensions = load_dimensions(fitness_dir)
+    valid, total = validate_weights(dimensions)
+
+    assert valid is True
+    assert total == 100
+    assert {dimension.name for dimension in dimensions} == {
+        "code_quality",
+        "design_system",
+        "ui_consistency",
+        "performance",
+    }
+
+
 def test_loader_load_dimensions(tmp_path: Path):
     fixture = tmp_path / "quality.md"
     fixture.write_text("---\ndimension: quality\nweight: 100\nmetrics: []\n---\n", encoding="utf-8")
