@@ -1,270 +1,226 @@
 ---
 name: entrix
-description: Set up entrix in the current repository by discovering the real lint, test, coverage, build, contract, and review commands, generating docs/fitness, and wiring fitness into AGENTS.md or CLAUDE.md. Use when the user asks to bootstrap entrix, add fitness specs, create review-trigger rules, add agent-facing fitness instructions, or make entrix validation runnable in a project.
+description: Set up or repair Entrix fitness specs in the current repository by discovering real quality signals, generating docs/fitness, and iterating with entrix validation until the result is executable. Use when the user asks to bootstrap entrix, add or split fitness dimensions, repair invalid fitness specs, or make docs/fitness actually runnable.
+license: MIT
 ---
 
-# Entrix Setup
+# Entrix Skill
 
-Goal: leave the current repository with a working `docs/fitness/` configuration
-that matches the real project tooling, can be validated immediately, and is
-discoverable from the repository's agent entrypoint.
+Goal: leave the target repository with a working `docs/fitness/` configuration
+that matches real tooling, is discoverable from the repository entrypoint, and
+passes Entrix validation instead of merely looking plausible.
 
-## Workflow
+This skill now uses a small entrypoint plus reusable spec files under
+`specs/`. Read those specs instead of improvising schema details.
 
-### 1. Inspect the target repository first
+## Skill Folder Contents
 
-Work from the repository root the user wants to bootstrap.
+- `specs/README.md`: second-level map of the available specs
+- `specs/schema-frontmatter.spec.md`: Entrix-compatible evidence file shape
+- `specs/manifest.spec.md`: required `manifest.yaml` shape
+- `specs/dimension-boundaries.spec.md`: how to split or merge dimensions
+- `specs/dimension-*.spec.md`: per-dimension guidance
+- `examples/`: copyable minimal snippets
 
-Read the files that reveal the real toolchain and quality gates:
+## Read Order
 
-- `AGENTS.md`
-- `CLAUDE.md`
-- `package.json`
-- `pyproject.toml`
-- `Cargo.toml`
-- `Makefile`, `justfile`, or equivalent task runners
-- `.github/workflows/**`
-- any existing `docs/fitness/**`
+For any bootstrap or repair task, read in this order:
 
-Prefer existing package scripts or CI commands over inventing new ones.
+1. target repository `AGENTS.md` and `CLAUDE.md` if present
+2. target repository manifests and task runners:
+   `package.json`, `pyproject.toml`, `Cargo.toml`, `justfile`, `Makefile`
+3. target repository `.github/workflows/**`
+4. existing target `docs/fitness/**` if present
+5. this skill's `specs/README.md`
+6. only the specific `specs/dimension-*.spec.md` files needed for the task
 
-### 2. Derive the executable checks
+## Core Rules
 
-Build the fitness spec from commands that already exist in the repository.
+- Use real repository signals only. Do not invent commands.
+- Prefer repository-root-safe wrappers such as `just`, `make`, `npm run`, or
+  `cargo --manifest-path ...` when a bare tool invocation would depend on a
+  subdirectory working directory.
+- Prefer checked-in scripts and CI-established commands over plausible
+  defaults.
+- Only create a security metric when the repository shows direct evidence for
+  that tool in scripts, CI, or checked-in docs. Do not add common scanners by
+  assumption.
+- Use Entrix-compatible schema only. Do not invent alternate manifest or
+  frontmatter shapes.
+- If weighted dimensions participate in scoring, their file-level weights must
+  sum to exactly `100`.
+- If the repository has a real build, package, docker, or CLI smoke signal,
+  consider `release_readiness` explicitly.
+- If the repository has a contract or schema surface, consider
+  `api_contract` explicitly.
 
-Preferred order:
+## Schema Rules
 
-1. package-manager or task-runner scripts already used by the repo
-2. commands copied from CI workflows
-3. direct tool commands only when the repository clearly uses them
+Use the standard Entrix shapes only:
 
-Rules:
-
-- never invent a command that does not exist
-- never write placeholder metrics such as `echo TODO`
-- use `hard_gate: true` only for checks that should really block progress
-- keep one concern per dimension file
-- make the weights of all dimension files sum to `100`
-- prefer stable repository scripts over raw tool invocations when both exist
-
-### 3. Make fitness discoverable to agents
-
-Agents should be able to find fitness from the repository entrypoint instead of
-guessing that `docs/fitness/` exists.
-
-Update agent-facing docs in this order:
-
-1. if `AGENTS.md` exists, add a short `Fitness Function` or `Entrix` section
-2. else if `CLAUDE.md` exists, add the same section there
-3. else create `AGENTS.md` with a minimal project entry and a fitness section
-
-Keep the entrypoint short. It should point to `docs/fitness/README.md` and tell
-agents when to run `entrix`.
-
-Minimum content:
-
-- `docs/fitness/README.md` is the fitness rulebook
-- `entrix run --dry-run` for inspection
-- `entrix run --tier fast` after normal source edits
-- `entrix run --tier normal` after behavior, API, shared-module, or workflow changes
-
-Do not duplicate the full rulebook into `AGENTS.md` or `CLAUDE.md`. Add an
-entrypoint, not a second copy.
-
-### 4. Create or update `docs/fitness/`
-
-Minimum output:
-
-- `docs/fitness/README.md`
-- `docs/fitness/manifest.yaml`
-- `docs/fitness/review-triggers.yaml`
-- at least `code-quality.md` and `testability.md`
-
-Create these files explicitly. Do not stop after only writing the dimension
-files.
-
-Always create dimensions from repository signals, not from generic expectations.
-
-Recommended discovery matrix:
-
-- `code-quality.md`
-  - use existing `lint`, `typecheck`, `clippy`, formatting, file-budget, duplicate-code, or static-analysis commands
-- `testability.md`
-  - use existing unit/integration test commands such as `npm test`, `vitest`, `pytest`, `cargo test`
-- `coverage.md`
-  - create only if the repository already has a coverage script, coverage CI job, or coverage tools such as `--coverage`, `pytest --cov`, `coverage xml`, `cargo llvm-cov`
-- `release-readiness.md`
-  - create when the repository has a real build, package, docker, or CLI smoke command
-- `security.md`
-  - create only if the repository already runs or clearly installs tools such as `npm audit`, `cargo audit`, `pip-audit`, `semgrep`, `trivy`, `bandit`
-- `api-contract.md`
-  - create when the repository has `openapi.*`, `api-contract.*`, schema validation scripts, parity checks, or generated client/server contract checks
-- `e2e.md` or UI-specific dimensions
-  - create only when the repository already has Playwright, Cypress, browser automation, or other end-to-end commands
-- `performance.md` or `observability.md`
-  - create only when the repository already has benchmark, load, profiling, runtime probe, or telemetry checks
-
-If coverage or contract checks already exist, do not hide them inside a vague
-`testability` bucket. Give them their own dimension file unless the repository
-is intentionally tiny.
-
-Each dimension file must use executable frontmatter:
-
-- `dimension`
-- `weight`
-- `tier`
-- `threshold`
-- `metrics`
-
-The YAML frontmatter must start with `---` and end with a closing `---` before
-any markdown body text. Do not omit the closing delimiter.
-
-Each metric should usually include:
-
-- `name`
-- `command`
-- `hard_gate`
-- `tier`
-- `description`
-
-Add advanced fields only when the repository context justifies them.
-
-Use this shape when the repository does not already have fitness files:
-
-```yaml
----
-dimension: code_quality
-weight: 35
-tier: normal
-threshold:
-  pass: 100
-  warn: 90
-metrics:
-  - name: lint_pass
-    command: npm run lint 2>&1
-    hard_gate: true
-    tier: fast
-    description: Lint must pass.
----
-
-# Code Quality
-
-Explain what this dimension guards.
-```
-
-`manifest.yaml` must include the schema header and repository-relative evidence
-paths:
+- each evidence file uses YAML frontmatter with:
+  - `dimension`
+  - `weight`
+  - `tier`
+  - `threshold`
+  - `metrics`
+- dimensions use `snake_case`, for example:
+  - `code_quality`
+  - `testability`
+  - `release_readiness`
+  - `api_contract`
+- `manifest.yaml` uses:
 
 ```yaml
 schema: fitness-manifest-v1
 evidence_files:
-  - docs/fitness/code-quality.md
+  - docs/fitness/code_quality.md
   - docs/fitness/testability.md
 ```
 
-### 5. Write review triggers that match real risk
+Never use:
 
-Use only rules that are justified by the target repository, for example:
+- `dimensions:`
+- metric-level `weight`
+- `pass_threshold`
+- bare filenames in `manifest.yaml`
+- hyphenated dimension ids when the repository already uses Entrix-style
+  snake_case
 
-- `changed_paths` for core runtime or orchestration directories
-- `sensitive_file_change` for contracts, schemas, release config, or governance
-- `cross_boundary_change` when the repository has clear architectural boundaries
-- `diff_size` for large changes
-- `evidence_gap` only when there is a meaningful evidence mapping to enforce
+## Workflow
 
-Do not cargo-cult the Routa.js paths into another repository.
+### 1. Inspect the target repository
 
-Use the exact entrix keys from the schema. For changed-file rules use `paths`,
-not `patterns`. Prefer `action: require_human_review` unless the repository
-already uses another action string intentionally.
+Determine the real executable signals from:
 
-Minimal shape:
+- package manager scripts
+- task runners such as `just`
+- CI workflows
+- checked-in helper scripts
+- existing `docs/fitness/**`
 
-```yaml
-review_triggers:
-  - name: oversized_change
-    type: diff_size
-    max_files: 10
-    max_added_lines: 400
-    max_deleted_lines: 250
-    severity: medium
-    action: require_human_review
-```
+Preferred command order:
 
-### 6. Keep the narrative useful but short
+1. repository task runner or package scripts already used locally
+2. root-safe commands copied from CI
+3. direct tool commands only when the repo clearly uses them and the working
+   directory is unambiguous
 
-`README.md` should explain:
+### 2. Design dimensions from actual surfaces
 
-- how to run `entrix validate`
-- when to use `fast`, `normal`, and `deep`
-- which dimension files exist
-- which files are listed in `manifest.yaml`
-- which agent entry file points to the fitness rulebook
-- how dimensions map to real repository commands
+Common dimension families:
 
-`README.md` is required. Do not omit it even for a minimal bootstrap.
+- `code_quality`
+- `testability` or `test_coverage`
+- `security`
+- `release_readiness`
+- `api_contract`
+- `ui_consistency`
+- `design_system`
+- runtime evidence such as `observability` or `performance`
 
-The markdown body below each frontmatter block should explain intent, ownership,
-or guardrail scope, but the frontmatter is the executable source of truth.
+Keep one stable concern per file. If the repository already separates concerns,
+do not collapse them into one vague file.
 
-### 7. Validate before finishing
+### 3. Write discoverable fitness docs
 
-Pick the correct invocation in this order:
+Minimum output for a new repository:
 
-1. `entrix ...` if the command already exists
-2. `uvx --from entrix entrix ...` when `uvx` is available
-3. `python3 -m entrix ...` when the package is installed but the console script is unavailable
+- `docs/fitness/README.md`
+- `docs/fitness/manifest.yaml`
+- `docs/fitness/review-triggers.yaml`
+- at least `code_quality` and `testability` or another clearly justified test
+  dimension
 
-Then run:
+Keep the repository entrypoint short:
+
+1. if `AGENTS.md` exists, add a short fitness section there
+2. else if `CLAUDE.md` exists, add it there
+3. else create a minimal `AGENTS.md`
+
+Do not duplicate the whole rulebook into the entrypoint file.
+
+### 4. Validate and iterate before stopping
+
+After generating or repairing `docs/fitness/`, you MUST validate it yourself.
+
+Use the best available Entrix invocation in this order:
+
+1. `entrix ...`
+2. `uvx --from entrix entrix ...`
+3. `python3 -m entrix ...`
+
+Run:
 
 ```bash
 entrix validate
 entrix run --dry-run
 ```
 
-If the fast tier is cheap and runnable, also run:
+If a `fast` tier exists or the generated commands are cheap, also run:
 
 ```bash
 entrix run --tier fast
 ```
 
-If validation fails because of the files you wrote, fix them before stopping.
-If validation fails because the repository's own commands are broken or missing,
-keep the generated config aligned to reality and report the failing command.
-If validation reports `0%` total weight or `No metrics matched`, read the files
-back and check for broken frontmatter delimiters or wrong schema keys.
+If validation fails because of files you wrote, fix them and re-run validation.
+Do not stop after the first draft.
 
-After validation, read back:
+Mandatory repair loop:
 
-- the agent entry file you changed
-- `docs/fitness/README.md`
-- `docs/fitness/manifest.yaml`
-- every generated dimension file
-- `docs/fitness/review-triggers.yaml`
+1. generate or repair `docs/fitness`
+2. run `entrix validate`
+3. if it fails, read back `manifest.yaml` and every evidence file
+4. fix schema, weights, paths, and command locality issues
+5. run `entrix validate` again
+6. run `entrix run --dry-run`
+7. if validation passes, run `entrix run --tier fast` whenever that tier exists
+   or the generated commands are cheap enough to execute locally
+8. if the fast tier fails because of generated command locality or invented
+   signals, repair and re-run validation
+9. stop only when validation passes and the generated config is runnable, or
+   you have a concrete repository blocker
 
-Verify that agent docs mention fitness and that manifest entries match the files
-that actually exist.
+### 5. Typical failure patterns to fix
+
+When validation reports `0%` total weight or `No metrics matched`, check for:
+
+- wrong frontmatter delimiters
+- wrong manifest shape
+- manifest entries using bare filenames instead of repo-relative paths
+- non-standard keys such as `pass_threshold`
+- missing file-level `weight`
+- dimension names that do not match Entrix conventions
+
+When generated commands are semantically wrong, check for:
+
+- root-level command run against a repo whose actual `Cargo.toml` lives in a
+  subdirectory
+- repo guidance that prefers `just test` over a raw `cargo nextest` variant
+- fabricated security tools not actually used by the repository
+- build commands that differ from the repository's real release/build path
+- commands copied from CI that silently depended on a workflow-specific working
+  directory
 
 ## Quality Bar
 
 The skill is complete only when all of the following are true:
 
-- `AGENTS.md` or `CLAUDE.md` points to the fitness rulebook
 - `docs/fitness/` exists and is coherent
 - `docs/fitness/README.md` exists
+- `manifest.yaml` includes `schema: fitness-manifest-v1`
+- `manifest.yaml` lists repo-relative evidence file paths
 - weights sum to `100`
 - every metric maps to a real repository command
-- `manifest.yaml` lists the active evidence files
-- `manifest.yaml` includes `schema: fitness-manifest-v1`
-- `review-triggers.yaml` matches the repository's actual risk boundaries
-- common repository signals such as coverage, security, API contract, build, and e2e checks were considered explicitly
-- validation has been attempted with the best available `entrix` invocation
+- validation has been attempted with Entrix itself
+- the generated config has been exercised beyond `dry-run` whenever a cheap
+  fast-tier run is available
+- validation failures caused by generated files have been repaired
 
 ## Avoid
 
 - leaving fitness undiscoverable from agent entry docs
-- copying example paths, commands, or risk boundaries without inspection
-- collapsing coverage, contract, security, and release checks into one generic file when the repository already separates them
-- inventing coverage thresholds or security tools that the repository does not actually use
-- generating a verbose tutorial instead of completing the setup work
-- turning the skill into meta-instructions about how to invoke the skill
+- inventing alternate schemas that Entrix does not parse
+- inventing security or coverage tools the repository does not use
+- using raw subdirectory-dependent commands when repo-root-safe wrappers exist
+- stopping after producing files that merely look reasonable
