@@ -151,11 +151,14 @@ Minimum output for a new repository:
 
 Keep the repository entrypoint short:
 
-1. if `AGENTS.md` exists, add a short fitness section there
-2. else if `CLAUDE.md` exists, add it there
-3. else create a minimal `AGENTS.md`
+1. if `AGENTS.md` exists, add or repair a short fitness section there
+2. if `CLAUDE.md` exists, add or repair the same short fitness section there too
+3. if both exist, keep them consistent instead of updating only one
+4. if neither exists, create a minimal `AGENTS.md`
 
 Do not duplicate the whole rulebook into the entrypoint file.
+The goal is discoverability from every agent entry document the repository
+already uses, not just the first one you happen to see.
 
 ### 4. Validate and iterate before stopping
 
@@ -238,6 +241,8 @@ The skill is complete only when all of the following are true:
 - `docs/fitness/README.md` exists
 - `manifest.yaml` includes `schema: fitness-manifest-v1`
 - `manifest.yaml` lists repo-relative evidence file paths
+- every existing repository entry document among `AGENTS.md` and `CLAUDE.md`
+  points to the fitness docs consistently
 - weights sum to `100`
 - every metric maps to a real repository command
 - every `fast` hard gate chosen by the skill is locally runnable, or is called
