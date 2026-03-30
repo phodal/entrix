@@ -52,6 +52,16 @@ For any bootstrap or repair task, read in this order:
   and no checked-in wrapper self-bootstraps it, do not leave it as a default
   `fast` hard gate. Prefer a locally runnable wrapper, another repo-established
   signal, or explicit blocker reporting.
+- If a repository's real test or build command is authoritative but requires
+  repo-specific dev dependencies or CI provisioning that are missing locally,
+  do not force it into the default local fast tier. Prefer a locally runnable
+  smoke check plus a CI-scoped authoritative metric. Prefer `execution_scope:
+  ci` over leaving that command as a default local metric that will fail on a
+  fresh machine.
+- Treat missing compiler/runtime versions the same way. If the repository
+  requires a newer Rust, Node, Python, or similar toolchain than the current
+  machine provides, do not keep those commands as default local metrics unless
+  the user explicitly wants that blocker preserved.
 - Use Entrix-compatible schema only. Do not invent alternate manifest or
   frontmatter shapes.
 - If weighted dimensions participate in scoring, their file-level weights must
@@ -188,7 +198,11 @@ Mandatory repair loop:
 9. if the fast tier fails because a generated metric requires optional tooling
    that is not locally runnable, replace it with a repo-safe runnable signal,
    move it out of the bootstrap fast tier, or report the blocker explicitly
-10. stop only when validation passes and the generated config is runnable, or
+10. if a repository's real test/build command exists but fails only because the
+    local environment lacks repo-specific dev dependencies, keep it out of the
+    default local fast tier and model it with `execution_scope: ci` or another
+    non-local authority boundary when appropriate
+11. stop only when validation passes and the generated config is runnable, or
    you have a concrete repository blocker
 
 ### 5. Typical failure patterns to fix
@@ -213,6 +227,8 @@ When generated commands are semantically wrong, check for:
   directory
 - optional toolchain checks that are real in principle but not locally runnable
   from the target repository without extra undeclared setup
+- real test commands that need dev dependencies the current local environment
+  has not installed, even though CI or contributor docs expect them
 
 ## Quality Bar
 
@@ -226,6 +242,13 @@ The skill is complete only when all of the following are true:
 - every metric maps to a real repository command
 - every `fast` hard gate chosen by the skill is locally runnable, or is called
   out as a concrete repository blocker
+- commands that are authoritative only in CI or provisioned environments are
+  modeled as such instead of pretending to be default local fast checks
+- default local `entrix run` does not execute CI-only metrics unless the user
+  explicitly asks for that scope
+- default local `entrix run` passes as a whole; soft or advisory metrics that
+  are expected to fail locally are CI-scoped, zero-weight, or otherwise modeled
+  so they do not sink the local score below threshold
 - validation has been attempted with Entrix itself
 - the generated config has been exercised beyond `dry-run` whenever a cheap
   fast-tier run is available

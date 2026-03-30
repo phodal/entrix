@@ -112,6 +112,17 @@ Do not bury them in narrative markdown.
   current environment. A metric is not a good default fast-tier candidate when
   it depends on optional tooling that is absent locally and the repository does
   not provide a checked-in wrapper that bootstraps or vendors it.
+- When a command is authoritative but only reliable in CI or another provisioned
+  environment, model that explicitly with `execution_scope` instead of
+  pretending it is a default local fast-tier check.
+- If a command requires dev dependencies that are not installed in the current
+  local environment, prefer `execution_scope: ci` over keeping it as a default
+  local metric that will fail during ordinary `entrix run`.
+- Apply the same rule when the current machine's compiler or runtime version is
+  below the repository's required toolchain level.
+- Remember that non-hard-gate metrics still affect the weighted score. If a
+  metric is expected to fail in ordinary local runs, do not leave it in a
+  weighted local dimension unless the thresholds intentionally account for that.
 - Use `pattern` only when output matching is more reliable than raw exit code.
 - Keep metric names stable; reports and CI fan-out often depend on them.
 - If a command is intentionally advisory, express that with metadata instead of
@@ -131,5 +142,7 @@ Do not bury them in narrative markdown.
   from the repository root
 - using a locally missing optional tool as a default `fast` hard gate when the
   repository offers no runnable wrapper for it
+- keeping a CI-provisioned test suite as a default local fast hard gate even
+  after confirming the current environment lacks the repo's required dev deps
 - changing `dimension` names casually, because downstream reporting may depend
   on them
