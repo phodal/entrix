@@ -46,6 +46,11 @@ uvx --from entrix entrix review-trigger --base HEAD~1
 - `normal`: adds tests and packaging verification
 - `deep`: reserved for future graph or security integrations
 
+Local dogfooding keeps one additional rule: plain local `entrix run` should stay
+green on a fresh machine. Metrics that are authoritative only in CI or other
+provisioned environments should be modeled with `execution_scope: ci` instead of
+remaining in the default local execution path.
+
 ## Files
 
 - `code-quality.md`: executable code quality metrics

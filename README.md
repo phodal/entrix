@@ -555,6 +555,19 @@ entrix validate
 entrix run --tier fast
 ```
 
+Bootstrap authoring rules:
+
+- keep default local `entrix run` green on a fresh machine
+- if a command is authoritative only in CI or a provisioned environment, model
+  it with `execution_scope: ci` instead of leaving it in the default local path
+- update every existing agent entry document consistently:
+  `AGENTS.md`, `CLAUDE.md`, or both
+- if neither entry document exists, create only `AGENTS.md`
+
+The repository also ships a bundled skill at `skills/entrix/` for agents that
+need to generate or repair `docs/fitness/` automatically. The skill follows the
+same bootstrap rules above and is validated against multiple real repositories.
+
 ## Python API
 
 ### Review trigger example
