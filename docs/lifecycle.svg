@@ -1,4 +1,4 @@
-<svg width="1600" height="1000" viewBox="0 0 1600 1000" xmlns="http://www.w3.org/2000/svg">
+<svg width="1600" height="880" viewBox="0 0 1600 880" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
       <polygon points="2,2 8,5 2,8" fill="#64748b"/>
@@ -6,10 +6,10 @@
   </defs>
 
   <!-- Background -->
-  <rect width="1600" height="1000" fill="#f8fafc"/>
+  <rect width="1600" height="880" fill="#f8fafc"/>
 
   <!-- Title -->
-  <text x="40" y="55" font-family="sans-serif" font-size="36" font-weight="700" fill="#1e293b">Entrix Lifecycle</text>
+  <text x="40" y="58" font-family="sans-serif" font-size="44" font-weight="700" fill="#1e293b">Entrix Lifecycle</text>
   <text x="40" y="85" font-family="sans-serif" font-size="17" font-weight="500" fill="#64748b">Executable guardrails shift quality earlier</text>
 
   <!-- Cost Bar -->
@@ -121,48 +121,47 @@
   <text x="1032" y="480" font-family="sans-serif" font-size="13" font-weight="600" fill="#b91c1c">Human intervenes</text>
   <text x="1012" y="498" font-family="sans-serif" font-size="12" fill="#475569">semantic ambiguity, validation</text>
 
-  <!-- System Foundation -->
-  <rect x="40" y="560" width="1520" height="120" rx="12" fill="#fefce8" stroke="#f59e0b" stroke-width="2"/>
-  <text x="60" y="600" font-family="sans-serif" font-size="22" font-weight="700" fill="#1e293b">System Foundation</text>
-  <text x="60" y="626" font-family="sans-serif" font-size="15" fill="#64748b">Entrix turns repository-native rules into executable decisions</text>
+  <!-- Bottom Row: 3 columns side by side -->
 
-  <rect x="80" y="644" width="280" height="42" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="110" y="672" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">docs/fitness/*.md</text>
-  <path d="M360 665 H410" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <rect x="420" y="644" width="320" height="42" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="450" y="672" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">entrix orchestration</text>
-  <path d="M740 665 H790" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <rect x="800" y="644" width="480" height="42" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="830" y="672" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">gates + score + triggers + evidence</text>
+  <!-- Column 1: System Foundation -->
+  <rect x="40" y="560" width="490" height="300" rx="12" fill="#fefce8" stroke="#f59e0b" stroke-width="2"/>
+  <text x="60" y="590" font-family="sans-serif" font-size="18" font-weight="700" fill="#1e293b">System Foundation</text>
+  <text x="60" y="612" font-family="sans-serif" font-size="13" fill="#64748b">Repository-native rules → executable decisions</text>
 
-  <!-- Codified -->
-  <rect x="40" y="710" width="1520" height="110" rx="12" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
-  <text x="60" y="750" font-family="sans-serif" font-size="22" font-weight="700" fill="#1e293b">Codified in Repo</text>
-  <text x="60" y="776" font-family="sans-serif" font-size="15" fill="#64748b">Rules, evidence, and execution logic stored in version control</text>
+  <rect x="70" y="630" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="200" y="656" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">docs/fitness/*.md</text>
+  <path d="M285 670 V695" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
+  <rect x="70" y="700" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="200" y="726" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">entrix orchestration</text>
+  <path d="M285 740 V765" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
+  <rect x="70" y="770" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="200" y="796" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">gates + score + triggers + evidence</text>
 
-  <rect x="80" y="788" width="340" height="38" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="110" y="814" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">rules: docs/fitness</text>
-  <path d="M420 807 H470" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <rect x="480" y="788" width="400" height="38" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="510" y="814" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">evidence: VERIFIED/TODO/BLOCKED</text>
-  <path d="M880 807 H930" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <rect x="940" y="788" width="400" height="38" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="970" y="814" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">execution: tier, scope, triggers</text>
+  <!-- Column 2: Codified in Repo -->
+  <rect x="555" y="560" width="490" height="300" rx="12" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+  <text x="575" y="590" font-family="sans-serif" font-size="18" font-weight="700" fill="#1e293b">Codified in Repo</text>
+  <text x="575" y="612" font-family="sans-serif" font-size="13" fill="#64748b">Rules, evidence, execution in version control</text>
 
-  <!-- Feedback Loop -->
-  <rect x="40" y="850" width="1520" height="100" rx="12" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
-  <text x="60" y="890" font-family="sans-serif" font-size="22" font-weight="700" fill="#1e293b">Feedback Loop</text>
-  <text x="60" y="916" font-family="sans-serif" font-size="15" fill="#64748b">Continuous improvement from production insights</text>
+  <rect x="585" y="630" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="715" y="656" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">rules: docs/fitness</text>
+  <path d="M800 670 V695" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
+  <rect x="585" y="700" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="715" y="726" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">evidence: VERIFIED / TODO / BLOCKED</text>
+  <path d="M800 740 V765" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
+  <rect x="585" y="770" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="715" y="796" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">execution: tier, scope, triggers</text>
 
-  <rect x="100" y="926" width="280" height="38" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="130" y="952" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">incident detected</text>
-  <path d="M380 945 H430" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <rect x="440" y="926" width="280" height="38" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="470" y="952" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">update rules</text>
-  <path d="M720 945 H770" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <rect x="780" y="926" width="280" height="38" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="810" y="952" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">tune thresholds</text>
-  <path d="M1060 945 H1110" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <rect x="1120" y="926" width="300" height="38" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="1150" y="952" font-family="sans-serif" font-size="15" font-weight="600" fill="#334155">add stronger checks</text>
+  <!-- Column 3: Feedback Loop -->
+  <rect x="1070" y="560" width="490" height="300" rx="12" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+  <text x="1090" y="590" font-family="sans-serif" font-size="18" font-weight="700" fill="#1e293b">Feedback Loop</text>
+  <text x="1090" y="612" font-family="sans-serif" font-size="13" fill="#64748b">Continuous improvement from production insights</text>
+
+  <rect x="1100" y="630" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1230" y="656" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">incident detected</text>
+  <path d="M1315 670 V695" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
+  <rect x="1100" y="700" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1230" y="726" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">update rules + tune thresholds</text>
+  <path d="M1315 740 V765" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
+  <rect x="1100" y="770" width="430" height="40" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="1230" y="796" font-family="sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">add stronger checks</text>
 </svg>
