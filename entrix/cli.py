@@ -22,6 +22,11 @@ from entrix.review_trigger import (
     evaluate_review_triggers,
     load_review_triggers,
 )
+from entrix.release_trigger import (
+    evaluate_release_triggers,
+    load_release_manifest,
+    load_release_triggers,
+)
 from entrix.reporters.terminal import TerminalReporter
 from entrix.reporters.visual import AsciiReporter, RichLiveProgressReporter, RichReporter
 from entrix.runners.graph import GraphRunner
@@ -132,6 +137,15 @@ def _find_review_trigger_config(project_root: Path) -> Path:
     config_path = get_project_preset().review_trigger_config(project_root)
     if not config_path.is_file():
         print(f"Error: review-trigger config not found at {config_path}")
+        sys.exit(1)
+    return config_path
+
+
+def _find_release_trigger_config(project_root: Path) -> Path:
+    """Locate the default release-trigger config."""
+    config_path = get_project_preset().release_trigger_config(project_root)
+    if not config_path.is_file():
+        print(f"Error: release-trigger config not found at {config_path}")
         sys.exit(1)
     return config_path
 
@@ -489,6 +503,68 @@ def cmd_review_trigger(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_release_trigger_report(report: dict) -> None:
+    print("Release trigger report")
+    print(f"- blocked: {'yes' if report.get('blocked') else 'no'}")
+    print(
+        "- human review required: "
+        f"{'yes' if report.get('human_review_required') else 'no'}"
+    )
+    print(f"- manifest: {report.get('manifest_path')}")
+    if report.get("baseline_manifest_path"):
+        print(f"- baseline manifest: {report['baseline_manifest_path']}")
+    print(f"- artifacts: {len(report.get('artifacts', []))}")
+    print(f"- changed files: {len(report.get('changed_files', []))}")
+    triggers = report.get("triggers", [])
+    if not triggers:
+        print("- triggers: none")
+        return
+    print("- triggers:")
+    for trigger in triggers:
+        print(
+            f"  - {trigger['name']} [{trigger['severity']}] "
+            f"-> {trigger['action']}"
+        )
+        for reason in trigger.get("reasons", []):
+            print(f"    - {reason}")
+
+
+def cmd_release_trigger(args: argparse.Namespace) -> int:
+    """Evaluate release-trigger rules for a release manifest."""
+    project_root = _find_project_root()
+    config_path = Path(args.config).resolve() if args.config else _find_release_trigger_config(project_root)
+
+    rules = load_release_triggers(config_path)
+    manifest_path = Path(args.manifest).resolve()
+    manifest_label, artifacts = load_release_manifest(manifest_path)
+    baseline_artifacts = ()
+    baseline_manifest_label: str | None = None
+    if args.baseline_manifest:
+        baseline_manifest_path = Path(args.baseline_manifest).resolve()
+        baseline_manifest_label, baseline_artifacts = load_release_manifest(baseline_manifest_path)
+    changed_files = args.files or collect_review_changed_files(project_root, args.base)
+    report = evaluate_release_triggers(
+        rules,
+        artifacts,
+        manifest_path=manifest_label,
+        changed_files=changed_files,
+        baseline_artifacts=baseline_artifacts,
+        baseline_manifest_path=baseline_manifest_label,
+    )
+
+    if args.json:
+        _print_json(report.to_dict())
+    else:
+        _print_release_trigger_report(report.to_dict())
+
+    if args.fail_on_trigger:
+        if report.blocked:
+            return 4
+        if report.human_review_required:
+            return 3
+    return 0
+
+
 def cmd_graph_build(args: argparse.Namespace) -> int:
     """Build or update the backing code graph."""
     runner = GraphRunner(_find_project_root())
@@ -813,6 +889,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     review_trigger_parser.add_argument("--json", action="store_true", help="Emit JSON output")
     review_trigger_parser.set_defaults(func=cmd_review_trigger)
+
+    release_trigger_parser = subparsers.add_parser(
+        "release-trigger",
+        help="Detect risky release-surface drift before publish",
+    )
+    release_trigger_parser.add_argument("files", nargs="*", help="Optional explicit changed files")
+    release_trigger_parser.add_argument("--manifest", required=True, help="Release manifest JSON path")
+    release_trigger_parser.add_argument("--baseline-manifest", help="Optional baseline manifest JSON path")
+    release_trigger_parser.add_argument("--base", default="HEAD~1", help="Git diff base")
+    release_trigger_parser.add_argument("--config", help="Optional release-trigger YAML config path")
+    release_trigger_parser.add_argument(
+        "--fail-on-trigger",
+        action="store_true",
+        help="Return non-zero when release review or block is required",
+    )
+    release_trigger_parser.add_argument("--json", action="store_true", help="Emit JSON output")
+    release_trigger_parser.set_defaults(func=cmd_release_trigger)
 
     hook_parser = subparsers.add_parser("hook", help="Reusable local hook helpers")
     hook_subparsers = hook_parser.add_subparsers(dest="hook_command")

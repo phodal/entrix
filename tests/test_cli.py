@@ -132,6 +132,47 @@ def test_parser_review_trigger_flags():
     assert args.files == ["src/core/acp/foo.ts"]
 
 
+def test_parser_release_trigger_defaults():
+    parser = build_parser()
+    args = parser.parse_args(["release-trigger", "--manifest", "dist/release/manifest.json"])
+    assert args.command == "release-trigger"
+    assert args.manifest == "dist/release/manifest.json"
+    assert args.baseline_manifest is None
+    assert args.base == "HEAD~1"
+    assert args.config is None
+    assert args.fail_on_trigger is False
+    assert args.json is False
+    assert args.files == []
+
+
+def test_parser_release_trigger_flags():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "release-trigger",
+            "--manifest",
+            "dist/release/manifest.json",
+            "--baseline-manifest",
+            "dist/release/baseline.json",
+            "--base",
+            "main",
+            "--config",
+            "docs/fitness/release-triggers.yaml",
+            "--fail-on-trigger",
+            "--json",
+            "scripts/release/stage-routa-cli-npm.mjs",
+        ]
+    )
+    assert args.command == "release-trigger"
+    assert args.manifest == "dist/release/manifest.json"
+    assert args.baseline_manifest == "dist/release/baseline.json"
+    assert args.base == "main"
+    assert args.config == "docs/fitness/release-triggers.yaml"
+    assert args.fail_on_trigger is True
+    assert args.json is True
+    assert args.files == ["scripts/release/stage-routa-cli-npm.mjs"]
+
+
 def test_parser_hook_file_length_flags():
     parser = build_parser()
     args = parser.parse_args(

@@ -16,6 +16,9 @@ class RoutaPreset:
     def review_trigger_config(self, project_root: Path) -> Path:
         return self.fitness_dir(project_root) / "review-triggers.yaml"
 
+    def release_trigger_config(self, project_root: Path) -> Path:
+        return self.fitness_dir(project_root) / "release-triggers.yaml"
+
     def should_ignore_changed_file(self, file_path: str) -> bool:
         return file_path.startswith(
             (

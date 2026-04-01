@@ -17,6 +17,9 @@ class ProjectPreset(Protocol):
     def review_trigger_config(self, project_root: Path) -> Path:
         """Return the default review-trigger config path for this project."""
 
+    def release_trigger_config(self, project_root: Path) -> Path:
+        """Return the default release-trigger config path for this project."""
+
     def should_ignore_changed_file(self, file_path: str) -> bool:
         """Return True when a changed file should be excluded from incremental fitness logic."""
 
