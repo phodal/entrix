@@ -14,5 +14,11 @@
     ".rs": 1500
   },
   "excluded_parts": ["/node_modules/", "/target/", "/.next/", "/_next/", "/bundled/"],
-  "overrides": []
+  "overrides": [
+    {
+      "path": "crates/routa-core/src/git.rs",
+      "max_lines": 1649,
+      "reason": "legacy hotspot frozen at current baseline; git utility split planned in follow-up refactor"
+    }
+  ]
 }

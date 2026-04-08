@@ -18,6 +18,16 @@
       "path": "crates/routa-core/src/acp/claude_code_process.rs",
       "max_lines": 808,
       "reason": "legacy hotspot frozen at current baseline; split planned in follow-up refactor"
+    },
+    {
+      "path": "crates/routa-core/src/git.rs",
+      "max_lines": 1649,
+      "reason": "legacy hotspot frozen at current baseline; git utility split planned in follow-up refactor"
+    },
+    {
+      "path": "crates/routa-server/src/api/tasks.rs",
+      "max_lines": 1485,
+      "reason": "legacy hotspot frozen at current baseline; task route workflow split planned in follow-up refactor"
     }
   ]
 }
