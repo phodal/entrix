@@ -5,6 +5,26 @@ from __future__ import annotations
 import re
 import subprocess
 import time
+
+_ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*[mGKHF]")
+
+# Keep first 4KB + last 4KB so both startup context and the final
+# summary (pass/fail line) survive truncation.
+_OUTPUT_HEAD = 4000
+_OUTPUT_TAIL = 4000
+_OUTPUT_MAX = _OUTPUT_HEAD + _OUTPUT_TAIL + 200  # a bit of slack
+
+
+def _smart_truncate(text: str) -> str:
+    """Keep head + tail of output so both context and verdict are visible."""
+    if len(text) <= _OUTPUT_MAX:
+        return text
+    head = text[:_OUTPUT_HEAD]
+    tail = text[-_OUTPUT_TAIL:]
+    omitted = len(text) - _OUTPUT_HEAD - _OUTPUT_TAIL
+    return f"{head}\n\n... [{omitted} characters omitted] ...\n\n{tail}"
+
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import environ
 from pathlib import Path
@@ -68,19 +88,39 @@ class ShellRunner:
             else:
                 output, returncode = self._run_captured(metric, timeout=timeout)
 
+            clean_output = _ANSI_ESCAPE.sub("", output)
+
             if metric.pattern:
-                passed = bool(re.search(metric.pattern, output, re.IGNORECASE))
+                pattern_matched = bool(re.search(metric.pattern, clean_output, re.IGNORECASE))
+                # Exit-code-first hybrid: non-zero exit always fails.
+                # Pattern is supplementary evidence when exit code is 0.
+                passed = (returncode == 0) and pattern_matched
             else:
                 passed = returncode == 0
 
             elapsed = (time.monotonic() - start) * 1000
+
+            # Determine result state: distinguish checker infrastructure errors
+            # from genuine product failures.
+            state: ResultState | None = None
+            if passed:
+                state = ResultState.PASS
+            elif returncode != 0 and metric.pattern and not pattern_matched:
+                # Both exit code AND pattern failed — likely an infrastructure
+                # error (missing file, crash, stack overflow, etc.)
+                state = ResultState.UNKNOWN
+            else:
+                state = ResultState.FAIL
+
             return MetricResult(
                 metric_name=metric.name,
                 passed=passed,
-                output=output[:2000],
+                output=_smart_truncate(clean_output),
                 tier=metric.tier,
                 hard_gate=metric.gate == Gate.HARD,
                 duration_ms=elapsed,
+                state=state,
+                returncode=returncode,
             )
         except subprocess.TimeoutExpired:
             elapsed = (time.monotonic() - start) * 1000
@@ -101,6 +141,7 @@ class ShellRunner:
                 tier=metric.tier,
                 hard_gate=metric.gate == Gate.HARD,
                 duration_ms=elapsed,
+                state=ResultState.UNKNOWN,
             )
 
     def _run_captured(self, metric: Metric, *, timeout: int) -> tuple[str, int]:

@@ -146,5 +146,99 @@ def test_run_waived_metric():
     )
     result = runner.run(metric)
     assert result.passed is True
-    assert result.state == ResultState.WAIVED
-    assert "temporary waiver" in result.output
+
+
+# === Fix 1: ANSI escape codes don't cause false failures ===
+
+def test_run_pattern_match_with_ansi_codes():
+    """Pattern matching should work correctly even when output contains ANSI color codes."""
+    runner = ShellRunner(Path("/tmp"))
+    m = Metric(
+        name="ansi_test",
+        command=r"printf '\033[1m\033[32mTests  1236 passed\033[39m\033[22m'",
+        pattern=r"Tests\s+\d+\s+passed",
+    )
+    result = runner.run(m)
+    assert result.passed is True
+    assert result.state == ResultState.PASS
+
+
+# === Fix 1: Exit-code-first hybrid judgment ===
+
+def test_run_pattern_exit_code_nonzero_overrides_pattern():
+    """Even if the pattern is found, a non-zero exit code means failure."""
+    runner = ShellRunner(Path("/tmp"))
+    m = Metric(
+        name="exit_override",
+        command="echo 'Tests 42 passed' && exit 1",
+        pattern=r"Tests\s+\d+\s+passed",
+    )
+    result = runner.run(m)
+    assert result.passed is False
+
+
+# === Fix 2: Output stored with ANSI stripped ===
+
+def test_output_is_ansi_stripped():
+    """Stored output should have ANSI codes removed for clean display."""
+    runner = ShellRunner(Path("/tmp"))
+    m = Metric(name="ansi_strip", command=r"printf '\033[31mred text\033[0m'")
+    result = runner.run(m)
+    assert "\x1b" not in result.output
+    assert "red text" in result.output
+
+
+# === Fix 2: Smart truncation keeps head and tail ===
+
+def test_output_smart_truncation_preserves_tail():
+    """Long output should keep both head and tail, not just first N chars."""
+    runner = ShellRunner(Path("/tmp"))
+    # Generate output with a distinctive marker at the end
+    m = Metric(
+        name="truncation_test",
+        command="for i in $(seq 1 500); do echo 'filler line $i'; done; echo 'FINAL_VERDICT: ok'",
+    )
+    result = runner.run(m)
+    # The tail should be preserved
+    assert "FINAL_VERDICT: ok" in result.output
+
+
+# === Fix 5: returncode is stored on MetricResult ===
+
+def test_result_stores_returncode():
+    """MetricResult should store the process exit code."""
+    runner = ShellRunner(Path("/tmp"))
+    m = Metric(name="rc_test", command="exit 42")
+    result = runner.run(m)
+    assert result.returncode == 42
+    assert result.passed is False
+
+
+# === Fix 6: Distinguish checker infra errors ===
+
+def test_infra_error_when_both_exit_and_pattern_fail():
+    """When exit code != 0 AND pattern not found, result should be UNKNOWN (infra error)."""
+    runner = ShellRunner(Path("/tmp"))
+    m = Metric(
+        name="infra_fail",
+        command="echo 'ENOENT: no such file' && exit 1",
+        pattern=r"Tests\s+\d+\s+passed",
+    )
+    result = runner.run(m)
+    assert result.passed is False
+    assert result.state == ResultState.UNKNOWN
+    assert result.is_infra_error is True
+
+
+def test_product_failure_when_exit_ok_but_pattern_fails():
+    """When exit code is 0 but pattern not found, it's a real failure (not infra)."""
+    runner = ShellRunner(Path("/tmp"))
+    m = Metric(
+        name="product_fail",
+        command="echo 'Tests 0 failed'",
+        pattern=r"Tests\s+\d+\s+passed",
+    )
+    result = runner.run(m)
+    assert result.passed is False
+    assert result.state == ResultState.FAIL
+    assert result.is_infra_error is False

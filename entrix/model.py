@@ -160,10 +160,16 @@ class MetricResult:
     hard_gate: bool = False
     duration_ms: float = 0.0
     state: ResultState | None = None
+    returncode: int | None = None
 
     def __post_init__(self) -> None:
         if self.state is None:
             self.state = ResultState.PASS if self.passed else ResultState.FAIL
+
+    @property
+    def is_infra_error(self) -> bool:
+        """True when the failure is likely an infrastructure/checker problem, not a product defect."""
+        return self.state == ResultState.UNKNOWN and not self.passed
 
 
 @dataclass

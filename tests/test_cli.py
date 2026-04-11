@@ -21,7 +21,7 @@ def test_parser_run_defaults():
     assert args.parallel is False
     assert args.dry_run is False
     assert args.verbose is False
-    assert args.stream == "off"
+    assert args.stream == "failures"
     assert args.format == "text"
     assert args.progress_refresh == 4
     assert args.min_score == 80.0
@@ -95,10 +95,10 @@ def test_parser_validate():
     assert args.command == "validate"
 
 
-def test_parser_run_stream_without_value_defaults_to_failures():
+def test_parser_run_stream_without_value_defaults_to_all():
     parser = build_parser()
     args = parser.parse_args(["run", "--stream"])
-    assert args.stream == "failures"
+    assert args.stream == "all"
 
 
 def test_parser_review_trigger_defaults():

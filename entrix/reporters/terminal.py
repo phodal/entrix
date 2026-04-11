@@ -75,19 +75,45 @@ class TerminalReporter:
         hard = " [HARD GATE]" if result.hard_gate else ""
         tier_label = f" [{result.tier.value}]" if show_tier else ""
 
-        print(f"   - {result.metric_name}: {status}{hard}{tier_label}")
+        # Annotate infrastructure errors distinctly so developers know the
+        # checker itself is broken, not their code.
+        infra_tag = ""
+        if result.is_infra_error:
+            infra_tag = " [INFRA ERROR]"
 
-        if result.state == ResultState.FAIL and (self.verbose or result.hard_gate):
+        print(f"   - {result.metric_name}: {status}{hard}{tier_label}{infra_tag}")
+
+        if result.state in (ResultState.FAIL, ResultState.UNKNOWN) and (self.verbose or result.hard_gate or result.is_infra_error):
             if result.output and result.output != f"TIMEOUT ({result.duration_ms:.0f}s)":
                 lines = result.output.strip().split("\n")
-                for line in lines[:10]:
-                    print(f"     > {line}")
-                if len(lines) > 10:
-                    print(f"     > ... ({len(lines) - 10} more lines)")
+                # Show head + tail of output so both context and verdict are visible
+                max_head = 20
+                max_tail = 30
+                if len(lines) <= max_head + max_tail:
+                    for line in lines:
+                        print(f"     > {line}")
+                else:
+                    for line in lines[:max_head]:
+                        print(f"     > {line}")
+                    omitted = len(lines) - max_head - max_tail
+                    print(f"     > ... ({omitted} lines omitted) ...")
+                    for line in lines[-max_tail:]:
+                        print(f"     > {line}")
 
     def print_footer(self, report: FitnessReport) -> None:
         print("\n" + "=" * 60)
         scored_dimensions = [ds for ds in report.dimensions if ds.weight > 0 and ds.total > 0]
+
+        # Collect infrastructure errors across all dimensions
+        infra_errors = []
+        for ds in report.dimensions:
+            for r in ds.results:
+                if r.is_infra_error:
+                    infra_errors.append(r.metric_name)
+
+        if infra_errors:
+            print(f"\u26a0\ufe0f  INFRA ERRORS: {', '.join(infra_errors)}")
+            print("   These failures are likely checker/tooling problems, not code defects.")
 
         if report.hard_gate_blocked:
             failures = []

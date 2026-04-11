@@ -22,16 +22,22 @@ ProgressSetupCallback = Callable[[list[Dimension]], None]
 
 
 def collect_changed_files(project_root: Path, base: str) -> list[str]:
-    """Collect changed files from git for incremental fitness runs."""
+    """Collect changed files from git for incremental fitness runs.
+
+    Only includes files that are committed (ahead of base) or staged.
+    Untracked and unstaged working-tree changes are excluded so that
+    unrelated WIP doesn't pollute the fitness scope.
+    """
     from entrix.presets import get_project_preset
 
     preset = get_project_preset()
     files: list[str] = []
 
     commands = [
+        # Committed changes ahead of base
         ["git", "diff", "--name-only", "--diff-filter=ACMR", base],
-        ["git", "diff", "--name-only", "--diff-filter=ACMR"],
-        ["git", "ls-files", "--others", "--exclude-standard"],
+        # Staged (index) changes
+        ["git", "diff", "--name-only", "--diff-filter=ACMR", "--cached"],
     ]
 
     for command in commands:

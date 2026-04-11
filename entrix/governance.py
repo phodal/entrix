@@ -18,7 +18,7 @@ class GovernancePolicy:
     parallel: bool = False
     dry_run: bool = False
     verbose: bool = False
-    stream_output: StreamOutputMode = "off"
+    stream_output: StreamOutputMode = "failures"
     min_score: float = 80.0
     fail_on_hard_gate: bool = True
     execution_scope: ExecutionScope | None = None

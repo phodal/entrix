@@ -835,10 +835,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--stream",
         nargs="?",
-        choices=["failures", "all"],
-        const="failures",
-        default="off",
-        help="Stream shell metric stdout/stderr for failed metrics or all metrics during text output",
+        choices=["off", "failures", "all"],
+        const="all",
+        default="failures",
+        help="Stream shell metric stdout/stderr. Default: 'failures' (replay on fail). Use 'all' for live output, 'off' to suppress.",
     )
     run_parser.add_argument(
         "--format",
