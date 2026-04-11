@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
 
@@ -13,7 +15,7 @@ from entrix.engine import collect_changed_files, run_fitness_report
 from entrix.file_budgets import evaluate_paths, is_tracked_source_file, load_config
 from entrix.governance import GovernancePolicy, StreamOutputMode, enforce
 from entrix.loaders import load_dimensions, validate_weights
-from entrix.model import ExecutionScope, Gate, Metric, MetricResult, ResultState, Tier
+from entrix.model import ExecutionScope, FitnessReport, Gate, Metric, MetricResult, ResultState, Tier
 from entrix.presets import get_project_preset
 from entrix.reporting import report_to_dict, write_report_output
 from entrix.review_trigger import (
@@ -85,6 +87,43 @@ def _find_project_root() -> Path:
         if (parent / "package.json").exists() or (parent / "Cargo.toml").exists():
             return parent
     return cwd
+
+
+def _runtime_marker(project_root: Path) -> str:
+    return hashlib.sha256(str(project_root).encode("utf-8")).hexdigest()
+
+
+def _runtime_event_path(project_root: Path) -> Path:
+    return Path("/tmp") / "routa-watch" / "runtime" / _runtime_marker(project_root) / "events.jsonl"
+
+
+def _emit_runtime_fitness_event(
+    project_root: Path,
+    *,
+    status: str,
+    tier: str | None,
+    report: FitnessReport | None,
+    metric_count: int | None,
+) -> None:
+    mode = "full" if tier in (None, "", "normal") else tier
+    event_path = _runtime_event_path(project_root)
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "type": "fitness",
+        "repo_root": str(project_root),
+        "observed_at_ms": int(datetime.now(timezone.utc).timestamp() * 1000),
+        "mode": mode,
+        "status": status,
+        "final_score": None if report is None else report.final_score,
+        "hard_gate_blocked": None if report is None else report.hard_gate_blocked,
+        "score_blocked": None if report is None else report.score_blocked,
+        "duration_ms": None,
+        "dimension_count": None if report is None else len(report.dimensions),
+        "metric_count": metric_count,
+    }
+    with event_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=True))
+        handle.write("\n")
 
 
 def _default_mcp_config() -> dict:
@@ -373,6 +412,13 @@ def cmd_run(args: argparse.Namespace) -> int:
                     "dimensions": [],
                 },
             )
+            _emit_runtime_fitness_event(
+                project_root,
+                status="skipped",
+                tier=args.tier,
+                report=None,
+                metric_count=0,
+            )
             return 0
 
         changed_domains = preset.domains_from_files(changed_files)
@@ -415,6 +461,13 @@ def cmd_run(args: argparse.Namespace) -> int:
                 "dimensions": [],
             },
         )
+        _emit_runtime_fitness_event(
+            project_root,
+            status="skipped",
+            tier=args.tier,
+            report=None,
+            metric_count=0,
+        )
         return 0
 
     if output_format == "text":
@@ -453,8 +506,15 @@ def cmd_run(args: argparse.Namespace) -> int:
         RichReporter().report(report)
 
     write_report_output(args.output, report_to_dict(report))
-
-    return enforce(report, policy)
+    exit_code = enforce(report, policy)
+    _emit_runtime_fitness_event(
+        project_root,
+        status="passed" if exit_code == 0 else "failed",
+        tier=args.tier,
+        report=report,
+        metric_count=sum(len(ds.results) for ds in report.dimensions),
+    )
+    return exit_code
 
 
 def cmd_validate(args: argparse.Namespace) -> int:

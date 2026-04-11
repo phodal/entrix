@@ -1,6 +1,8 @@
 """Tests for entrix.cli."""
 
 import argparse
+import hashlib
+import json
 from pathlib import Path
 
 from entrix.cli import _ShellOutputController, _domains_from_files, _metric_domains, build_parser, cmd_analyze_long_file, cmd_run
@@ -490,6 +492,70 @@ def test_cmd_run_defaults_scope_to_local(monkeypatch):
 
     assert exit_code == 0
     assert captured["execution_scope"] == ExecutionScope.LOCAL
+
+
+def test_cmd_run_emits_runtime_fitness_event(tmp_path, monkeypatch):
+    dimension = type("Dimension", (), {"name": "testability", "weight": 18, "source_file": "docs/fitness/unit-test.md"})()
+    report = FitnessReport(
+        final_score=97.0,
+        hard_gate_blocked=False,
+        score_blocked=False,
+        dimensions=[
+            type("DimensionReport", (), {
+                "dimension": "testability",
+                "weight": 18,
+                "passed": 1,
+                "total": 1,
+                "score": 97.0,
+                "hard_gate_failures": [],
+                "results": [
+                    MetricResult(
+                        metric_name="eslint_pass",
+                        passed=True,
+                        output="ok",
+                        tier=Tier.FAST,
+                        state=ResultState.PASS,
+                    )
+                ]
+            })()
+        ],
+    )
+
+    monkeypatch.setattr("entrix.cli._find_project_root", lambda: tmp_path)
+    monkeypatch.setattr("entrix.cli._find_fitness_dir", lambda _project_root: tmp_path / "docs" / "fitness")
+    monkeypatch.setattr("entrix.cli.get_project_preset", lambda: object())
+    monkeypatch.setattr("entrix.cli._collect_run_files", lambda _args, _project_root: [])
+    monkeypatch.setattr("entrix.cli.run_fitness_report", lambda *_args, **_kwargs: (report, [dimension]))
+    monkeypatch.setattr("entrix.cli.enforce", lambda _report, _policy: 0)
+    monkeypatch.setattr("entrix.cli.write_report_output", lambda *_args, **_kwargs: None)
+
+    args = argparse.Namespace(
+        tier="fast",
+        scope=None,
+        parallel=False,
+        dry_run=False,
+        verbose=False,
+        stream="off",
+        format="text",
+        progress_refresh=4,
+        min_score=80.0,
+        dimension=[],
+        metric=[],
+        output=None,
+        changed_only=False,
+        files=[],
+        base="HEAD",
+    )
+
+    exit_code = cmd_run(args)
+
+    assert exit_code == 0
+    event_path = Path("/tmp") / "routa-watch" / "runtime" / hashlib.sha256(str(tmp_path).encode("utf-8")).hexdigest() / "events.jsonl"
+    payload = json.loads(event_path.read_text(encoding="utf-8").strip().splitlines()[-1])
+    assert payload["type"] == "fitness"
+    assert payload["mode"] == "fast"
+    assert payload["status"] == "passed"
+    assert payload["final_score"] == 97.0
 
 
 def test_shell_output_controller_streams_all_output_immediately(capsys):
