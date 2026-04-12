@@ -5,6 +5,14 @@ from __future__ import annotations
 import re
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from os import environ
+from pathlib import Path
+from queue import Empty, Queue
+from threading import Thread
+from typing import Callable
+
+from entrix.model import Gate, Metric, MetricResult, ResultState
 
 _ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*[mGKHF]")
 
@@ -23,16 +31,6 @@ def _smart_truncate(text: str) -> str:
     tail = text[-_OUTPUT_TAIL:]
     omitted = len(text) - _OUTPUT_HEAD - _OUTPUT_TAIL
     return f"{head}\n\n... [{omitted} characters omitted] ...\n\n{tail}"
-
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from os import environ
-from pathlib import Path
-from queue import Empty, Queue
-from threading import Thread
-from typing import Callable
-
-from entrix.model import Gate, Metric, MetricResult, ResultState
 
 ProgressCallback = Callable[[str, Metric, MetricResult | None], None]
 OutputCallback = Callable[[Metric, str, str], None]
