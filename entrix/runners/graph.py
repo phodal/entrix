@@ -17,6 +17,39 @@ from entrix.structure.impact import (
 )
 
 
+def _mapping_source_preview(
+    mappings: list[dict[str, Any]],
+    *,
+    status: str,
+    limit: int = 5,
+) -> str:
+    paths = list(
+        dict.fromkeys(
+            item.get("source_file")
+            for item in mappings
+            if item.get("status") == status and isinstance(item.get("source_file"), str)
+        )
+    )
+    if not paths:
+        return "-"
+    preview = ", ".join(paths[:limit])
+    if len(paths) > limit:
+        preview = f"{preview}, +{len(paths) - limit} more"
+    return preview
+
+
+def _resolver_breakdown(mappings: list[dict[str, Any]]) -> str:
+    counts: dict[str, int] = {}
+    for item in mappings:
+        resolver = item.get("resolver_kind")
+        if not isinstance(resolver, str) or not resolver:
+            continue
+        counts[resolver] = counts.get(resolver, 0) + 1
+    if not counts:
+        return "-"
+    return ", ".join(f"{resolver}={counts[resolver]}" for resolver in sorted(counts))
+
+
 class GraphRunner:
     """Runs fitness probes backed by the code graph.
 
@@ -626,6 +659,7 @@ class GraphRunner:
             )
 
         counts = result.get("status_counts", {})
+        mappings = result.get("mappings", [])
         missing = int(counts.get("missing", 0))
         unknown = int(counts.get("unknown", 0))
         changed = int(counts.get("changed", 0))
@@ -641,7 +675,10 @@ class GraphRunner:
                 f"existing_test_mappings: {exists}\n"
                 f"inline_test_mappings: {inline}\n"
                 f"missing_mappings: {missing}\n"
-                f"unknown_mappings: {unknown}"
+                f"unknown_mappings: {unknown}\n"
+                f"missing_files: {_mapping_source_preview(mappings, status='missing')}\n"
+                f"unknown_files: {_mapping_source_preview(mappings, status='unknown')}\n"
+                f"resolver_breakdown: {_resolver_breakdown(mappings)}"
             ),
             tier=Tier.NORMAL,
         )

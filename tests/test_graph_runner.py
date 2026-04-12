@@ -322,10 +322,23 @@ def test_probe_test_mapping_warns_when_missing_mappings(monkeypatch, tmp_path: P
         "analyze_test_mappings",
         lambda *_args, **_kwargs: {
             "mappings": [
-                {"status": "missing"},
-                {"status": "exists"},
+                {
+                    "source_file": "src/service.ts",
+                    "status": "missing",
+                    "resolver_kind": "path_heuristic",
+                },
+                {
+                    "source_file": "src/unknown.rs",
+                    "status": "unknown",
+                    "resolver_kind": "hybrid_heuristic",
+                },
+                {
+                    "source_file": "src/exists.ts",
+                    "status": "exists",
+                    "resolver_kind": "semantic_graph",
+                },
             ],
-            "status_counts": {"missing": 1, "exists": 1},
+            "status_counts": {"missing": 1, "unknown": 1, "exists": 1},
         },
     )
 
@@ -334,7 +347,13 @@ def test_probe_test_mapping_warns_when_missing_mappings(monkeypatch, tmp_path: P
 
     assert result.passed is False
     assert "missing_mappings: 1" in result.output
-    assert "unknown_mappings: 0" in result.output
+    assert "unknown_mappings: 1" in result.output
+    assert "missing_files: src/service.ts" in result.output
+    assert "unknown_files: src/unknown.rs" in result.output
+    assert (
+        "resolver_breakdown: hybrid_heuristic=1, path_heuristic=1, semantic_graph=1"
+        in result.output
+    )
 
 
 def test_probe_test_mapping_skips_without_changed_source_files(monkeypatch, tmp_path: Path):
