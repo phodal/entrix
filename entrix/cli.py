@@ -228,6 +228,10 @@ def _print_graph_test_mapping(result: dict) -> None:
     if counts:
         ordered = ", ".join(f"{key}={counts[key]}" for key in sorted(counts))
         print(f"Statuses: {ordered}")
+    resolver_counts = result.get("resolver_counts", {})
+    if resolver_counts:
+        ordered = ", ".join(f"{key}={resolver_counts[key]}" for key in sorted(resolver_counts))
+        print(f"Resolvers: {ordered}")
     graph = result.get("graph", {})
     print(
         "Graph enrichment: "

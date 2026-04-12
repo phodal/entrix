@@ -30,6 +30,8 @@ def test_analyze_test_mappings_marks_changed_typescript_counterpart(tmp_path: Pa
     assert result["skipped_test_files"] == ["src/core/skills/__tests__/skill-loader.test.ts"]
     assert result["mappings"][0]["status"] == "changed"
     assert result["mappings"][0]["resolver_kind"] == "path_heuristic"
+    assert result["status_counts"] == {"changed": 1}
+    assert result["resolver_counts"] == {"path_heuristic": 1}
 
 
 def test_analyze_test_mappings_marks_inline_rust_tests(tmp_path: Path):
@@ -47,6 +49,8 @@ def test_analyze_test_mappings_marks_inline_rust_tests(tmp_path: Path):
 
     assert result["mappings"][0]["status"] == "inline"
     assert result["mappings"][0]["has_inline_tests"] is True
+    assert result["status_counts"] == {"inline": 1}
+    assert result["resolver_counts"] == {"inline_test": 1}
 
 
 def test_analyze_test_mappings_marks_missing_java_main_source(tmp_path: Path):
@@ -64,6 +68,8 @@ def test_analyze_test_mappings_marks_missing_java_main_source(tmp_path: Path):
 
     assert result["mappings"][0]["language"] == "java"
     assert result["mappings"][0]["status"] == "missing"
+    assert result["status_counts"] == {"missing": 1}
+    assert result["resolver_counts"] == {"path_heuristic": 1}
 
 
 def test_analyze_test_mappings_prefers_graph_semantic_evidence(monkeypatch, tmp_path: Path):
@@ -115,3 +121,5 @@ def test_analyze_test_mappings_prefers_graph_semantic_evidence(monkeypatch, tmp_
     assert result["mappings"][0]["graph_test_files"] == [
         "crates/demo/tests/rust_api_git_read_routes.rs"
     ]
+    assert result["status_counts"] == {"exists": 1}
+    assert result["resolver_counts"] == {"semantic_graph": 1}

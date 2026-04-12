@@ -72,6 +72,16 @@ def _find_crate_root(path: Path, project_root: Path) -> Path | None:
     return None
 
 
+def _count_by_key(items: list[dict[str, Any]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for item in items:
+        value = item.get(key)
+        if not isinstance(value, str) or not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return counts
+
+
 @dataclass
 class ResolverOutcome:
     related_test_files: list[str]
@@ -333,9 +343,8 @@ def analyze_test_mappings(
         )
         for source_file in source_files
     ]
-    counts: dict[str, int] = {}
-    for mapping in mappings:
-        counts[mapping["status"]] = counts.get(mapping["status"], 0) + 1
+    status_counts = _count_by_key(mappings, "status")
+    resolver_counts = _count_by_key(mappings, "resolver_kind")
 
     return {
         "status": "ok",
@@ -347,6 +356,7 @@ def analyze_test_mappings(
         "changed_files": changed,
         "skipped_test_files": skipped_test_files,
         "mappings": mappings,
-        "status_counts": counts,
+        "status_counts": status_counts,
+        "resolver_counts": resolver_counts,
         "graph": graph_summary,
     }
