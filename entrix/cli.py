@@ -727,6 +727,9 @@ def cmd_graph_test_mapping(args: argparse.Namespace) -> int:
         _print_json(result)
     else:
         _print_graph_test_mapping(result)
+    missing_mappings = int((result.get("status_counts") or {}).get("missing", 0))
+    if args.fail_on_missing and missing_mappings > 0:
+        return 2
     return 0
 
 
@@ -1140,6 +1143,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-graph",
         action="store_true",
         help="Disable graph enrichment and use heuristic mapping only",
+    )
+    graph_test_mapping.add_argument(
+        "--fail-on-missing",
+        action="store_true",
+        help="Return non-zero when at least one source file has no asserted test mapping",
     )
     graph_test_mapping.add_argument("--json", action="store_true", help="Emit JSON output")
     graph_test_mapping.set_defaults(func=cmd_graph_test_mapping)

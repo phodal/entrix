@@ -5,7 +5,15 @@ import hashlib
 import json
 from pathlib import Path
 
-from entrix.cli import _ShellOutputController, _domains_from_files, _metric_domains, build_parser, cmd_analyze_long_file, cmd_run
+from entrix.cli import (
+    _ShellOutputController,
+    _domains_from_files,
+    _metric_domains,
+    build_parser,
+    cmd_analyze_long_file,
+    cmd_graph_test_mapping,
+    cmd_run,
+)
 from entrix.engine import matches_changed_files
 from entrix.reporters.terminal import TerminalReporter
 from entrix.model import ExecutionScope, FitnessReport, Metric, MetricResult, ResultState, Tier
@@ -346,6 +354,32 @@ def test_parser_graph_query():
     assert args.json is True
 
 
+def test_parser_graph_test_mapping_flags():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "graph",
+            "test-mapping",
+            "--base",
+            "HEAD~2",
+            "--build-mode",
+            "skip",
+            "--no-graph",
+            "--fail-on-missing",
+            "--json",
+            "src/a.ts",
+        ]
+    )
+    assert args.command == "graph"
+    assert args.graph_command == "test-mapping"
+    assert args.base == "HEAD~2"
+    assert args.build_mode == "skip"
+    assert args.no_graph is True
+    assert args.fail_on_missing is True
+    assert args.json is True
+    assert args.files == ["src/a.ts"]
+
+
 def test_parser_graph_history():
     parser = build_parser()
     args = parser.parse_args(["graph", "history", "--count", "5", "--ref", "main"])
@@ -580,6 +614,56 @@ def test_cmd_run_emits_runtime_fitness_event(tmp_path, monkeypatch):
     assert payload["mode"] == "fast"
     assert payload["status"] == "passed"
     assert payload["final_score"] == 97.0
+
+
+def test_cmd_graph_test_mapping_returns_non_zero_when_missing(monkeypatch):
+    monkeypatch.setattr("entrix.cli._find_project_root", lambda: Path("/tmp/project"))
+    monkeypatch.setattr(
+        "entrix.cli.analyze_test_mappings",
+        lambda *_args, **_kwargs: {
+            "status": "ok",
+            "status_counts": {"missing": 1},
+            "mappings": [],
+        },
+    )
+
+    args = argparse.Namespace(
+        files=["src/demo.ts"],
+        base="HEAD",
+        build_mode="auto",
+        no_graph=True,
+        fail_on_missing=True,
+        json=True,
+    )
+
+    exit_code = cmd_graph_test_mapping(args)
+
+    assert exit_code == 2
+
+
+def test_cmd_graph_test_mapping_allows_missing_when_flag_disabled(monkeypatch):
+    monkeypatch.setattr("entrix.cli._find_project_root", lambda: Path("/tmp/project"))
+    monkeypatch.setattr(
+        "entrix.cli.analyze_test_mappings",
+        lambda *_args, **_kwargs: {
+            "status": "ok",
+            "status_counts": {"missing": 2},
+            "mappings": [],
+        },
+    )
+
+    args = argparse.Namespace(
+        files=["src/demo.ts"],
+        base="HEAD",
+        build_mode="auto",
+        no_graph=True,
+        fail_on_missing=False,
+        json=True,
+    )
+
+    exit_code = cmd_graph_test_mapping(args)
+
+    assert exit_code == 0
 
 
 def test_shell_output_controller_streams_all_output_immediately(capsys):
