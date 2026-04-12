@@ -32,6 +32,7 @@ from entrix.release_trigger import (
 from entrix.reporters.terminal import TerminalReporter
 from entrix.reporters.visual import AsciiReporter, RichLiveProgressReporter, RichReporter
 from entrix.runners.graph import GraphRunner
+from entrix.test_mapping import analyze_test_mappings
 
 
 class _ShellOutputController:
@@ -217,6 +218,30 @@ def _print_graph_test_radius(result: dict) -> None:
         print("Untested targets:")
         for target in result["untested_targets"][:20]:
             print(f"  - {target['qualified_name']}")
+
+
+def _print_graph_test_mapping(result: dict) -> None:
+    print(result.get("summary", "No summary available."))
+    print(f"Changed files: {len(result.get('changed_files', []))}")
+    print(f"Skipped changed test files: {len(result.get('skipped_test_files', []))}")
+    counts = result.get("status_counts", {})
+    if counts:
+        ordered = ", ".join(f"{key}={counts[key]}" for key in sorted(counts))
+        print(f"Statuses: {ordered}")
+    graph = result.get("graph", {})
+    print(
+        "Graph enrichment: "
+        f"{'on' if graph.get('available') else 'off'} "
+        f"({graph.get('status', 'unknown')})"
+    )
+    for item in result.get("mappings", [])[:20]:
+        related = item.get("related_test_files", [])
+        related_preview = ", ".join(related[:3]) if related else "-"
+        print(
+            f"- {item['source_file']} [{item['language']}] "
+            f"status={item['status']} resolver={item['resolver_kind']} "
+            f"tests={related_preview}"
+        )
 
 
 def _print_graph_query(result: dict) -> None:
@@ -689,6 +714,22 @@ def cmd_graph_test_radius(args: argparse.Namespace) -> int:
     return 0 if result.get("status") != "unavailable" else 1
 
 
+def cmd_graph_test_mapping(args: argparse.Namespace) -> int:
+    """Show cross-language source-to-test mappings for changed files."""
+    result = analyze_test_mappings(
+        _find_project_root(),
+        args.files or None,
+        base=args.base,
+        use_graph=not args.no_graph,
+        build_mode=args.build_mode,
+    )
+    if args.json:
+        _print_json(result)
+    else:
+        _print_graph_test_mapping(result)
+    return 0
+
+
 def cmd_graph_query(args: argparse.Namespace) -> int:
     """Run a graph query such as callers_of or tests_for."""
     runner = GraphRunner(_find_project_root())
@@ -1082,6 +1123,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     graph_test_radius.add_argument("--json", action="store_true", help="Emit JSON output")
     graph_test_radius.set_defaults(func=cmd_graph_test_radius)
+
+    graph_test_mapping = graph_subparsers.add_parser(
+        "test-mapping",
+        help="Map changed source files to related tests with heuristic and graph evidence",
+    )
+    graph_test_mapping.add_argument("files", nargs="*", help="Optional explicit changed files")
+    graph_test_mapping.add_argument("--base", default="HEAD", help="Git diff base")
+    graph_test_mapping.add_argument(
+        "--build-mode",
+        choices=["auto", "full", "skip"],
+        default="auto",
+        help="Graph build mode for optional semantic enrichment",
+    )
+    graph_test_mapping.add_argument(
+        "--no-graph",
+        action="store_true",
+        help="Disable graph enrichment and use heuristic mapping only",
+    )
+    graph_test_mapping.add_argument("--json", action="store_true", help="Emit JSON output")
+    graph_test_mapping.set_defaults(func=cmd_graph_test_mapping)
 
     graph_query = graph_subparsers.add_parser("query", help="Run a graph query")
     graph_query.add_argument(

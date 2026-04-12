@@ -260,6 +260,30 @@ def test_parser_analyze_long_file_supports_positional_and_flagged_files():
     assert args.files == ["src/b.py", "src/c.rs"]
 
 
+def test_parser_graph_test_mapping_flags():
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "graph",
+            "test-mapping",
+            "--base",
+            "HEAD~2",
+            "--build-mode",
+            "skip",
+            "--no-graph",
+            "--json",
+            "src/core/skills/skill-loader.ts",
+        ]
+    )
+    assert args.command == "graph"
+    assert args.graph_command == "test-mapping"
+    assert args.base == "HEAD~2"
+    assert args.build_mode == "skip"
+    assert args.no_graph is True
+    assert args.json is True
+    assert args.files == ["src/core/skills/skill-loader.ts"]
+
+
 def test_cmd_analyze_long_file_merges_positional_and_flagged_files(monkeypatch):
     captured = {}
 
