@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import entrix.runners.graph as graph_module
+import entrix.test_mapping as test_mapping_module
 from entrix.runners.graph import GraphRunner
 
 
@@ -312,6 +313,43 @@ def test_probe_test_coverage_skips_when_no_changed_files(monkeypatch, tmp_path: 
         "changed_files: 0\n"
         "test_files_in_radius: 0"
     )
+
+
+def test_probe_test_mapping_warns_when_missing_mappings(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(graph_module, "try_create_adapter", lambda _: FakeAdapter())
+    monkeypatch.setattr(
+        test_mapping_module,
+        "analyze_test_mappings",
+        lambda *_args, **_kwargs: {
+            "mappings": [
+                {"status": "missing"},
+                {"status": "exists"},
+            ],
+            "status_counts": {"missing": 1, "exists": 1},
+        },
+    )
+
+    runner = GraphRunner(tmp_path)
+    result = runner.probe_test_mapping(["src/service.ts"])
+
+    assert result.passed is False
+    assert "missing_mappings: 1" in result.output
+    assert "unknown_mappings: 0" in result.output
+
+
+def test_probe_test_mapping_skips_without_changed_source_files(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(graph_module, "try_create_adapter", lambda _: FakeAdapter())
+    monkeypatch.setattr(
+        test_mapping_module,
+        "analyze_test_mappings",
+        lambda *_args, **_kwargs: {"mappings": [], "status_counts": {}},
+    )
+
+    runner = GraphRunner(tmp_path)
+    result = runner.probe_test_mapping([])
+
+    assert result.state.value == "skipped"
+    assert "changed_source_files: 0" in result.output
 
 
 def test_analyze_test_radius_returns_unavailable_when_build_fails(monkeypatch, tmp_path: Path):

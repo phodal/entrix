@@ -593,6 +593,59 @@ class GraphRunner:
             tier=Tier.NORMAL,
         )
 
+    def probe_test_mapping(
+        self,
+        changed_files: list[str] | None = None,
+        *,
+        base: str = "HEAD",
+        build_mode: str = "auto",
+    ) -> MetricResult:
+        """Check whether changed source files have related tests or inline evidence."""
+        from entrix.test_mapping import analyze_test_mappings
+
+        result = analyze_test_mappings(
+            self.project_root,
+            changed_files,
+            base=base,
+            use_graph=True,
+            build_mode=build_mode,
+        )
+        source_file_count = len(result.get("mappings", []))
+        if source_file_count == 0:
+            return MetricResult(
+                metric_name="graph_test_mapping",
+                passed=False,
+                output=(
+                    "graph_test_mapping: skipped (no changed source files)\n"
+                    "changed_source_files: 0\n"
+                    "missing_mappings: 0\n"
+                    "unknown_mappings: 0"
+                ),
+                tier=Tier.NORMAL,
+                state=ResultState.SKIPPED,
+            )
+
+        counts = result.get("status_counts", {})
+        missing = int(counts.get("missing", 0))
+        unknown = int(counts.get("unknown", 0))
+        changed = int(counts.get("changed", 0))
+        exists = int(counts.get("exists", 0))
+        inline = int(counts.get("inline", 0))
+        return MetricResult(
+            metric_name="graph_test_mapping",
+            passed=missing == 0,
+            output=(
+                f"graph_test_mapping: {'ok' if missing == 0 else 'warn'}\n"
+                f"changed_source_files: {source_file_count}\n"
+                f"changed_test_mappings: {changed}\n"
+                f"existing_test_mappings: {exists}\n"
+                f"inline_test_mappings: {inline}\n"
+                f"missing_mappings: {missing}\n"
+                f"unknown_mappings: {unknown}"
+            ),
+            tier=Tier.NORMAL,
+        )
+
     def _generate_review_guidance(self, radius: dict[str, Any]) -> str:
         guidance_parts: list[str] = []
 

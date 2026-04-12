@@ -81,6 +81,20 @@ class FakeGraphRunner:
             state=ResultState.SKIPPED,
         )
 
+    def probe_test_mapping(
+        self,
+        changed_files: list[str] | None = None,
+        *,
+        base: str = "HEAD",
+    ) -> MetricResult:
+        self.calls.append(("test-mapping", changed_files, base))
+        return MetricResult(
+            metric_name="graph_test_mapping",
+            passed=True,
+            output="graph_test_mapping: ok",
+            tier=Tier.NORMAL,
+        )
+
 
 class FakeSarifRunner:
     def __init__(self, _project_root: Path, env_overrides: dict[str, str] | None = None) -> None:
@@ -167,6 +181,41 @@ def test_run_fitness_report_excludes_skipped_probe_from_score(monkeypatch, tmp_p
 
     assert report.dimensions[0].results[0].state == ResultState.SKIPPED
     assert report.dimensions[0].total == 0
+
+
+def test_run_fitness_report_dispatches_test_mapping_probe(monkeypatch, tmp_path: Path):
+    graph_runner = FakeGraphRunner(tmp_path)
+    monkeypatch.setattr(
+        engine_module,
+        "load_dimensions",
+        lambda _fitness_dir: [
+            Dimension(
+                name="testability",
+                weight=20,
+                metrics=[
+                    Metric(
+                        name="graph_test_mapping",
+                        command="graph:test-mapping",
+                        evidence_type=EvidenceType.PROBE,
+                    )
+                ],
+            )
+        ],
+    )
+    monkeypatch.setattr(engine_module, "ShellRunner", FakeShellRunner)
+    monkeypatch.setattr(engine_module, "SarifRunner", FakeSarifRunner)
+    monkeypatch.setattr(engine_module, "GraphRunner", lambda _project_root: graph_runner)
+
+    report, _ = engine_module.run_fitness_report(
+        tmp_path,
+        GovernancePolicy(),
+        get_project_preset(),
+        changed_files=["src/service.ts"],
+        base="HEAD~1",
+    )
+
+    assert report.dimensions[0].results[0].metric_name == "graph_test_mapping"
+    assert graph_runner.calls == [("test-mapping", ["src/service.ts"], "HEAD~1")]
 
 
 def test_run_fitness_report_filters_dimensions_from_policy(monkeypatch, tmp_path: Path):

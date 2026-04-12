@@ -295,6 +295,8 @@ def _run_probe_metric(
         result = graph_runner.probe_impact(changed_files or None, base=base)
     elif metric.command in {"graph:test-radius", "graph:test-coverage"}:
         result = graph_runner.probe_test_coverage(changed_files or None, base=base)
+    elif metric.command == "graph:test-mapping":
+        result = graph_runner.probe_test_mapping(changed_files or None, base=base)
     else:
         result = MetricResult(
             metric_name=metric.name,
