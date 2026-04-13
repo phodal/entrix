@@ -691,7 +691,7 @@ python3 -m entrix hook file-length \
 Use it when you want AI-friendly oversized-file failures during `pre-commit`, for example:
 
 ```text
-current file length 2383 exceeds limit 1500: src/app/page.tsx
+current file length 2383 exceeds limit 1600: src/app/page.tsx
 ```
 
 A copy-pasteable template lives in [`examples/file-length-hook/`](examples/file-length-hook/).

@@ -49,7 +49,7 @@ If you also want lint in the same hook, run it after the file-length guard.
 ```text
 file_budget_checked: 1
 file_budget_violations: 1
-current file length 2383 exceeds limit 1500: src/app/page.tsx
+current file length 2383 exceeds limit 1600: src/app/page.tsx
 Refactor the oversized file before commit.
 ```
 
