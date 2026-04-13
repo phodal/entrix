@@ -729,6 +729,10 @@ def test_cmd_run_emits_runtime_fitness_event(tmp_path, monkeypatch):
     artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
     assert artifact["mode"] == "fast"
     assert artifact["final_score"] == 97.0
+    assert artifact["producer"] == "entrix"
+    assert artifact["changed_file_count"] == 0
+    assert artifact["changed_files_preview"] == []
+    assert artifact["failing_metrics"] == []
 
     mailbox_dir = runtime_root / "mailbox" / "fitness" / "new"
     mailbox_messages = sorted(mailbox_dir.glob("*.json"))

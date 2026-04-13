@@ -131,6 +131,16 @@ def _load_runtime_coverage_summary(project_root: Path) -> dict:
     }
 
 
+def _summarize_metric_output(output: str) -> str | None:
+    lines = [line.strip() for line in output.splitlines() if line.strip()][:3]
+    if not lines:
+        return None
+    excerpt = " | ".join(lines)
+    if len(excerpt) > 180:
+        excerpt = excerpt[:177] + "..."
+    return excerpt
+
+
 def _build_runtime_fitness_snapshot(
     project_root: Path,
     *,
@@ -138,9 +148,14 @@ def _build_runtime_fitness_snapshot(
     report: FitnessReport,
     duration_ms: float,
     artifact_path: str,
+    observed_at_ms: int,
+    producer: str,
+    base_ref: str | None,
+    changed_files: list[str],
 ) -> dict:
     dimensions = []
     slowest_metrics = []
+    failing_metrics = []
     coverage_metric_available = False
 
     for dimension_score in report.dimensions:
@@ -152,9 +167,12 @@ def _build_runtime_fitness_snapshot(
                 "state": result.state.value if result.state is not None else "unknown",
                 "hard_gate": result.hard_gate,
                 "duration_ms": result.duration_ms,
+                "output_excerpt": _summarize_metric_output(result.output),
             }
             metrics.append(metric_summary)
             slowest_metrics.append(metric_summary)
+            if metric_summary["state"] not in ("pass", "waived"):
+                failing_metrics.append(metric_summary)
             coverage_metric_available = coverage_metric_available or (
                 "coverage" in result.metric_name.lower() or "cover" in result.metric_name.lower()
             )
@@ -171,6 +189,13 @@ def _build_runtime_fitness_snapshot(
         )
 
     slowest_metrics.sort(key=lambda metric: metric["duration_ms"], reverse=True)
+    failing_metrics.sort(
+        key=lambda metric: (
+            not metric["hard_gate"],
+            -metric["duration_ms"],
+            metric["name"],
+        )
+    )
     return {
         "mode": _runtime_mode(tier),
         "final_score": report.final_score,
@@ -183,6 +208,12 @@ def _build_runtime_fitness_snapshot(
         "dimensions": dimensions,
         "slowest_metrics": slowest_metrics[:5],
         "artifact_path": artifact_path,
+        "producer": producer,
+        "generated_at_ms": observed_at_ms,
+        "base_ref": base_ref,
+        "changed_file_count": len(changed_files),
+        "changed_files_preview": changed_files[:8],
+        "failing_metrics": failing_metrics[:5],
     }
 
 
@@ -733,6 +764,12 @@ def cmd_run(args: argparse.Namespace) -> int:
             "dimensions": [],
             "slowest_metrics": [],
             "artifact_path": None,
+            "producer": "entrix",
+            "generated_at_ms": observed_at_ms,
+            "base_ref": args.base if changed_files else None,
+            "changed_file_count": len(changed_files),
+            "changed_files_preview": changed_files[:8],
+            "failing_metrics": [],
         },
         observed_at_ms=observed_at_ms,
     )
@@ -742,6 +779,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         report=report,
         duration_ms=duration_ms,
         artifact_path=artifact_path,
+        observed_at_ms=observed_at_ms,
+        producer="entrix",
+        base_ref=(args.base if changed_files else None),
+        changed_files=changed_files,
     )
     artifact_path = _write_runtime_fitness_artifacts(
         project_root,
