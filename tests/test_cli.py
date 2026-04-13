@@ -11,9 +11,11 @@ from entrix.cli import (
     _metric_domains,
     build_parser,
     cmd_analyze_long_file,
+    cmd_hook_file_length,
     cmd_graph_test_mapping,
     cmd_run,
 )
+from entrix.file_budgets import FileBudgetViolation
 from entrix.engine import matches_changed_files
 from entrix.reporters.terminal import TerminalReporter
 from entrix.model import ExecutionScope, FitnessReport, Metric, MetricResult, ResultState, Tier
@@ -295,6 +297,136 @@ def test_cmd_analyze_long_file_merges_positional_and_flagged_files(monkeypatch):
 
     assert exit_code == 0
     assert captured["files"] == ["src/b.py", "src/a.ts", "src/c.rs"]
+
+
+def test_cmd_hook_file_length_prints_structure_summary(monkeypatch, capsys, tmp_path):
+    config = object()
+    violation = FileBudgetViolation(
+        path="src/app.ts",
+        line_count=1201,
+        max_lines=1000,
+        reason="legacy hotspot",
+    )
+
+    monkeypatch.setattr("entrix.cli._find_project_root", lambda: tmp_path)
+    monkeypatch.setattr("entrix.cli.load_config", lambda _path: config)
+    monkeypatch.setattr("entrix.cli.evaluate_paths", lambda *_args, **_kwargs: [violation])
+    monkeypatch.setattr(
+        "entrix.cli.is_tracked_source_file",
+        lambda path, loaded_config: loaded_config is config and path == "src/app.ts",
+    )
+    monkeypatch.setattr(
+        "entrix.cli.analyze_long_files",
+        lambda *_args, **_kwargs: {
+            "status": "ok",
+            "files": [
+                {
+                    "filePath": "src/app.ts",
+                    "status": "ok",
+                    "classes": [
+                        {
+                            "name": "AppController",
+                            "startLine": 10,
+                            "endLine": 120,
+                            "lineCount": 111,
+                            "methodCount": 2,
+                            "methods": [
+                                {
+                                    "name": "handleRequest",
+                                    "startLine": 20,
+                                    "endLine": 80,
+                                    "lineCount": 61,
+                                },
+                                {
+                                    "name": "renderView",
+                                    "startLine": 82,
+                                    "endLine": 110,
+                                    "lineCount": 29,
+                                },
+                            ],
+                        }
+                    ],
+                    "functions": [
+                        {
+                            "name": "bootstrap",
+                            "startLine": 130,
+                            "endLine": 170,
+                            "lineCount": 41,
+                        }
+                    ],
+                    "warnings": [],
+                }
+            ],
+        },
+    )
+
+    args = argparse.Namespace(
+        config=str(tmp_path / "file_budgets.json"),
+        files=["src/app.ts"],
+        staged_only=False,
+        strict_limit=False,
+        base="HEAD",
+    )
+
+    exit_code = cmd_hook_file_length(args)
+    out = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert "file_budget_checked: 1" in out
+    assert "file_budget_violations: 1" in out
+    assert "current file length 1201 exceeds limit 1000: src/app.ts | legacy hotspot" in out
+    assert "Refactor the oversized file before commit." in out
+    assert "Structure summary (tree-sitter symbols):" in out
+    assert "- src/app.ts" in out
+    assert "class AppController (L10-120, 111, methods=2)" in out
+    assert "method handleRequest (L20-80, 61)" in out
+    assert "functions: bootstrap (L130-170, 41)" in out
+
+
+def test_cmd_hook_file_length_handles_unavailable_structure_summary(
+    monkeypatch,
+    capsys,
+    tmp_path,
+):
+    config = object()
+    violation = FileBudgetViolation(
+        path="src/app.ts",
+        line_count=1201,
+        max_lines=1000,
+    )
+
+    monkeypatch.setattr("entrix.cli._find_project_root", lambda: tmp_path)
+    monkeypatch.setattr("entrix.cli.load_config", lambda _path: config)
+    monkeypatch.setattr("entrix.cli.evaluate_paths", lambda *_args, **_kwargs: [violation])
+    monkeypatch.setattr(
+        "entrix.cli.is_tracked_source_file",
+        lambda path, loaded_config: loaded_config is config and path == "src/app.ts",
+    )
+    monkeypatch.setattr(
+        "entrix.cli.analyze_long_files",
+        lambda *_args, **_kwargs: {
+            "status": "unavailable",
+            "summary": "long-file analysis requires tree-sitter-language-pack",
+            "files": [],
+        },
+    )
+
+    args = argparse.Namespace(
+        config=str(tmp_path / "file_budgets.json"),
+        files=["src/app.ts"],
+        staged_only=False,
+        strict_limit=False,
+        base="HEAD",
+    )
+
+    exit_code = cmd_hook_file_length(args)
+    out = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert (
+        "Structure summary unavailable: long-file analysis requires tree-sitter-language-pack"
+        in out
+    )
 
 
 def test_parser_graph_impact_defaults():

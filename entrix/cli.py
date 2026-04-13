@@ -294,6 +294,64 @@ def _format_compact_items(items: list[dict]) -> str:
     return ", ".join(f"{item['name']} ({_format_line_span(item)})" for item in items)
 
 
+def _sort_structure_items(items: list[dict]) -> list[dict]:
+    return sorted(items, key=lambda item: (-item["lineCount"], item["startLine"], item["name"]))
+
+
+def _print_hook_long_file_summary(
+    result: dict,
+    *,
+    max_classes: int = 3,
+    max_methods_per_class: int = 4,
+    max_functions: int = 5,
+) -> None:
+    files = result.get("files", [])
+    if not files:
+        print("Structure summary unavailable: no supported files for structural analysis.")
+        return
+
+    print("Structure summary (tree-sitter symbols):")
+    for item in files:
+        file_path = item.get("filePath", "<unknown>")
+        if item.get("status") not in {None, "ok"}:
+            print(f"- {file_path}: {item.get('summary', 'analysis failed')}")
+            continue
+
+        print(f"- {file_path}")
+        classes = _sort_structure_items(item.get("classes", []))
+        functions = _sort_structure_items(item.get("functions", []))
+
+        if not classes and not functions:
+            print("  no class/function symbols found")
+            continue
+
+        for cls in classes[:max_classes]:
+            print(
+                f"  class {cls['name']} "
+                f"({_format_line_span(cls)}, methods={cls.get('methodCount', 0)})"
+            )
+            methods = _sort_structure_items(cls.get("methods", []))
+            for method in methods[:max_methods_per_class]:
+                print(f"    method {method['name']} ({_format_line_span(method)})")
+            remaining_methods = len(methods) - max_methods_per_class
+            if remaining_methods > 0:
+                print(f"    ... {remaining_methods} more method(s)")
+
+        remaining_classes = len(classes) - max_classes
+        if remaining_classes > 0:
+            print(f"  ... {remaining_classes} more class(es)")
+
+        if functions:
+            print(f"  functions: {_format_compact_items(functions[:max_functions])}")
+            remaining_functions = len(functions) - max_functions
+            if remaining_functions > 0:
+                print(f"  ... {remaining_functions} more function(s)")
+
+        warnings = item.get("warnings", [])
+        if warnings:
+            print(f"  review-warnings: {len(warnings)}")
+
+
 def _print_long_file_analysis(result: dict, *, min_lines: int = 60) -> None:
     files = result.get("files", [])
     if not files:
@@ -806,7 +864,8 @@ def cmd_graph_review_context(args: argparse.Namespace) -> int:
 def cmd_hook_file_length(args: argparse.Namespace) -> int:
     """Run a reusable file-length guard suitable for pre-commit hooks."""
     project_root = _find_project_root()
-    config = load_config(Path(args.config).resolve())
+    config_path = Path(args.config).resolve()
+    config = load_config(config_path)
     relative_paths = args.files or []
     if not relative_paths:
         file_budget_args = argparse.Namespace(
@@ -840,6 +899,20 @@ def cmd_hook_file_length(args: argparse.Namespace) -> int:
         )
     if violations:
         print("Refactor the oversized file before commit.")
+        structure_result = analyze_long_files(
+            project_root,
+            files=list(dict.fromkeys(violation.path for violation in violations)),
+            config_path=config_path,
+            base=args.base,
+            use_head_ratchet=not args.strict_limit,
+        )
+        if structure_result.get("status") == "unavailable":
+            print(
+                "Structure summary unavailable: "
+                f"{structure_result.get('summary', 'long-file analysis unavailable')}"
+            )
+        else:
+            _print_hook_long_file_summary(structure_result)
         return 1
     return 0
 
