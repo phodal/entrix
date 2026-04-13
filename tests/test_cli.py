@@ -716,12 +716,23 @@ def test_cmd_run_emits_runtime_fitness_event(tmp_path, monkeypatch):
     exit_code = cmd_run(args)
 
     assert exit_code == 0
-    event_path = Path("/tmp") / "routa-watch" / "runtime" / hashlib.sha256(str(tmp_path).encode("utf-8")).hexdigest() / "events.jsonl"
+    runtime_root = Path("/tmp") / "harness-monitor" / "runtime" / hashlib.sha256(str(tmp_path).encode("utf-8")).hexdigest()
+    event_path = runtime_root / "events.jsonl"
     payload = json.loads(event_path.read_text(encoding="utf-8").strip().splitlines()[-1])
     assert payload["type"] == "fitness"
     assert payload["mode"] == "fast"
     assert payload["status"] == "passed"
     assert payload["final_score"] == 97.0
+    assert payload["artifact_path"]
+
+    artifact_path = Path(payload["artifact_path"])
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert artifact["mode"] == "fast"
+    assert artifact["final_score"] == 97.0
+
+    mailbox_dir = runtime_root / "mailbox" / "fitness" / "new"
+    mailbox_messages = sorted(mailbox_dir.glob("*.json"))
+    assert mailbox_messages
 
 
 def test_cmd_graph_test_mapping_returns_non_zero_when_missing(monkeypatch):

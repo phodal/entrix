@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
@@ -94,8 +95,120 @@ def _runtime_marker(project_root: Path) -> str:
     return hashlib.sha256(str(project_root).encode("utf-8")).hexdigest()
 
 
+def _runtime_root(project_root: Path) -> Path:
+    return Path("/tmp") / "harness-monitor" / "runtime" / _runtime_marker(project_root)
+
+
 def _runtime_event_path(project_root: Path) -> Path:
-    return Path("/tmp") / "routa-watch" / "runtime" / _runtime_marker(project_root) / "events.jsonl"
+    return _runtime_root(project_root) / "events.jsonl"
+
+
+def _runtime_fitness_artifact_dir(project_root: Path) -> Path:
+    return _runtime_root(project_root) / "artifacts" / "fitness"
+
+
+def _runtime_fitness_mailbox_dir(project_root: Path) -> Path:
+    return _runtime_root(project_root) / "mailbox" / "fitness" / "new"
+
+
+def _runtime_mode(tier: str | None) -> str:
+    return "full" if tier in (None, "", "normal") else tier
+
+
+def _load_runtime_coverage_summary(project_root: Path) -> dict:
+    summary_path = project_root / "target" / "coverage" / "fitness-summary.json"
+    if not summary_path.is_file():
+        return {"generated_at_ms": None, "typescript": {}, "rust": {}}
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"generated_at_ms": None, "typescript": {}, "rust": {}}
+    sources = payload.get("sources", {})
+    return {
+        "generated_at_ms": payload.get("generated_at_ms"),
+        "typescript": sources.get("typescript", {}) or {},
+        "rust": sources.get("rust", {}) or {},
+    }
+
+
+def _build_runtime_fitness_snapshot(
+    project_root: Path,
+    *,
+    tier: str | None,
+    report: FitnessReport,
+    duration_ms: float,
+    artifact_path: str,
+) -> dict:
+    dimensions = []
+    slowest_metrics = []
+    coverage_metric_available = False
+
+    for dimension_score in report.dimensions:
+        metrics = []
+        for result in dimension_score.results:
+            metric_summary = {
+                "name": result.metric_name,
+                "passed": result.passed,
+                "state": result.state.value if result.state is not None else "unknown",
+                "hard_gate": result.hard_gate,
+                "duration_ms": result.duration_ms,
+            }
+            metrics.append(metric_summary)
+            slowest_metrics.append(metric_summary)
+            coverage_metric_available = coverage_metric_available or (
+                "coverage" in result.metric_name.lower() or "cover" in result.metric_name.lower()
+            )
+        dimensions.append(
+            {
+                "name": dimension_score.dimension,
+                "weight": dimension_score.weight,
+                "score": dimension_score.score,
+                "passed": dimension_score.passed,
+                "total": dimension_score.total,
+                "hard_gate_failures": dimension_score.hard_gate_failures,
+                "metrics": metrics,
+            }
+        )
+
+    slowest_metrics.sort(key=lambda metric: metric["duration_ms"], reverse=True)
+    return {
+        "mode": _runtime_mode(tier),
+        "final_score": report.final_score,
+        "hard_gate_blocked": report.hard_gate_blocked,
+        "score_blocked": report.score_blocked,
+        "duration_ms": duration_ms,
+        "metric_count": sum(len(ds.results) for ds in report.dimensions),
+        "coverage_metric_available": coverage_metric_available,
+        "coverage_summary": _load_runtime_coverage_summary(project_root),
+        "dimensions": dimensions,
+        "slowest_metrics": slowest_metrics[:5],
+        "artifact_path": artifact_path,
+    }
+
+
+def _write_runtime_fitness_artifacts(
+    project_root: Path,
+    *,
+    tier: str | None,
+    snapshot: dict,
+    observed_at_ms: int,
+) -> str:
+    mode = _runtime_mode(tier)
+    artifact_dir = _runtime_fitness_artifact_dir(project_root)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = artifact_dir / f"{observed_at_ms}-{mode}.json"
+    latest_path = artifact_dir / f"latest-{mode}.json"
+    serialized = json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n"
+    artifact_path.write_text(serialized, encoding="utf-8")
+    latest_path.write_text(serialized, encoding="utf-8")
+    return str(artifact_path)
+
+
+def _write_runtime_fitness_mailbox_message(project_root: Path, *, payload: dict) -> None:
+    mailbox_dir = _runtime_fitness_mailbox_dir(project_root)
+    mailbox_dir.mkdir(parents=True, exist_ok=True)
+    mailbox_path = mailbox_dir / f"{payload['observed_at_ms']}-{payload['mode']}.json"
+    mailbox_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def _emit_runtime_fitness_event(
@@ -105,8 +218,10 @@ def _emit_runtime_fitness_event(
     tier: str | None,
     report: FitnessReport | None,
     metric_count: int | None,
+    duration_ms: float | None,
+    artifact_path: str | None,
 ) -> None:
-    mode = "full" if tier in (None, "", "normal") else tier
+    mode = _runtime_mode(tier)
     event_path = _runtime_event_path(project_root)
     event_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -118,13 +233,15 @@ def _emit_runtime_fitness_event(
         "final_score": None if report is None else report.final_score,
         "hard_gate_blocked": None if report is None else report.hard_gate_blocked,
         "score_blocked": None if report is None else report.score_blocked,
-        "duration_ms": None,
+        "duration_ms": duration_ms,
         "dimension_count": None if report is None else len(report.dimensions),
         "metric_count": metric_count,
+        "artifact_path": artifact_path,
     }
     with event_path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(payload, ensure_ascii=True))
         handle.write("\n")
+    _write_runtime_fitness_mailbox_message(project_root, payload=payload)
 
 
 def _default_mcp_config() -> dict:
@@ -454,6 +571,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     project_root = _find_project_root()
     _find_fitness_dir(project_root)
     preset = get_project_preset()
+    run_started_at = time.perf_counter()
 
     tier_filter = Tier(args.tier) if args.tier else None
     execution_scope = ExecutionScope(args.scope) if args.scope else ExecutionScope.LOCAL
@@ -505,6 +623,8 @@ def cmd_run(args: argparse.Namespace) -> int:
                 tier=args.tier,
                 report=None,
                 metric_count=0,
+                duration_ms=0.0,
+                artifact_path=None,
             )
             return 0
 
@@ -554,6 +674,8 @@ def cmd_run(args: argparse.Namespace) -> int:
             tier=args.tier,
             report=None,
             metric_count=0,
+            duration_ms=0.0,
+            artifact_path=None,
         )
         return 0
 
@@ -594,12 +716,47 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     write_report_output(args.output, report_to_dict(report))
     exit_code = enforce(report, policy)
+    duration_ms = (time.perf_counter() - run_started_at) * 1000.0
+    observed_at_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    artifact_path = _write_runtime_fitness_artifacts(
+        project_root,
+        tier=args.tier,
+        snapshot={
+            "mode": _runtime_mode(args.tier),
+            "final_score": report.final_score,
+            "hard_gate_blocked": report.hard_gate_blocked,
+            "score_blocked": report.score_blocked,
+            "duration_ms": duration_ms,
+            "metric_count": sum(len(ds.results) for ds in report.dimensions),
+            "coverage_metric_available": False,
+            "coverage_summary": {"generated_at_ms": None, "typescript": {}, "rust": {}},
+            "dimensions": [],
+            "slowest_metrics": [],
+            "artifact_path": None,
+        },
+        observed_at_ms=observed_at_ms,
+    )
+    snapshot = _build_runtime_fitness_snapshot(
+        project_root,
+        tier=args.tier,
+        report=report,
+        duration_ms=duration_ms,
+        artifact_path=artifact_path,
+    )
+    artifact_path = _write_runtime_fitness_artifacts(
+        project_root,
+        tier=args.tier,
+        snapshot=snapshot,
+        observed_at_ms=observed_at_ms,
+    )
     _emit_runtime_fitness_event(
         project_root,
         status="passed" if exit_code == 0 else "failed",
         tier=args.tier,
         report=report,
         metric_count=sum(len(ds.results) for ds in report.dimensions),
+        duration_ms=duration_ms,
+        artifact_path=artifact_path,
     )
     return exit_code
 
